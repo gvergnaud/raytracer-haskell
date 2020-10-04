@@ -44,10 +44,10 @@ vecToLine (Vec3 r g b) =
 
 world :: [Sphere]
 world =
-  [ Sphere (Vec3 0 0 (-1.5)) 0.5 (Lambertian (Vec3 0.8 0.3 0.3)),
-    Sphere (Vec3 0 (-100.5) (-1)) 100 (Lambertian (Vec3 0.5 0.5 0.5)),
-    Sphere (Vec3 1 0 (-2)) 0.5 (Metal (Vec3 0.8 0.2 0.2) 0.05),
-    Sphere (Vec3 (-0.75) 0 (-1)) 0.5 (Dielectric 1.5)
+  [ Sphere (Vec3 0 (-100.5) (-1)) 100 (Lambertian (Vec3 0.5 0.5 0.5)),
+    Sphere (Vec3 0 0 (-1)) 0.5 (Lambertian (Vec3 0.8 0.3 0.3)),
+    Sphere (Vec3 1 0 (-1)) 0.5 (Metal (Vec3 0.8 0.2 0.2) 0.05),
+    Sphere (Vec3 (-1) 0 (-1)) 0.5 (Dielectric 1.5)
   ]
 
 average :: Fractional a => [a] -> a
@@ -59,7 +59,7 @@ gammaCorrection vec =
 
 pixels :: Float -> Float -> IO [String]
 pixels nx ny =
-  let camera = newCamera 90 (nx / ny)
+  let camera = newCamera (Vec3 (-2) 2 1) (Vec3 0 0 (-1)) (Vec3 0 1 0) 50 (nx / ny)
       getAvgColor x y =
         fmap average $
           parallel $ do

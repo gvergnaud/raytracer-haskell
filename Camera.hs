@@ -12,16 +12,19 @@ data Camera = Camera
     vertical :: Vec3
   }
 
-newCamera :: Float -> Float -> Camera
-newCamera fov aspect =
+newCamera :: Vec3 -> Vec3 -> Vec3 -> Float -> Float -> Camera
+newCamera lookFrom lookAt vup fov aspect =
   let theta = fov * pi / 180
       halfHeight = tan $ theta / 2
       halfWidth = aspect * halfHeight
+      w = unitVector $ lookFrom - lookAt
+      u = unitVector $ vup `cross` w
+      v = w `cross` u
    in Camera
-        { Camera.origin = vec3 0,
-          lowerLeftCorner = Vec3 (- halfWidth) (- halfHeight) (-1),
-          horizontal = Vec3 (2 * halfWidth) 0 0,
-          vertical = Vec3 0 (2 * halfHeight) 0
+        { Camera.origin = lookFrom,
+          lowerLeftCorner = lookFrom - vec3 halfWidth * u - vec3 halfHeight * v - w,
+          horizontal = vec3 (2 * halfWidth) * u,
+          vertical = vec3 (2 * halfHeight) * v
         }
 
 getRay :: Float -> Float -> Camera -> Ray
