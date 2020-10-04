@@ -60,19 +60,16 @@ gammaCorrection vec =
 pixels :: Float -> Float -> IO [String]
 pixels nx ny =
   let camera = newCamera (Vec3 (-2) 2 1) (Vec3 0 0 (-1)) (Vec3 0 1 0) 50 (nx / ny)
-      getAvgColor x y =
-        fmap average $
-          parallel $ do
-            subPixelX <- [0, 0.2 .. 1]
-            subPixelY <- [0, 0.2 .. 1]
-            let u = (x + subPixelX) / nx
-            let v = (y + subPixelY) / ny
-            let ray = getRay u v camera
-            return . fmap gammaCorrection $ (color ray world)
    in parallel $ do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx -1)]
-        return . fmap vecToLine $ getAvgColor x y
+        return . fmap (vecToLine . average) . sequence $ do
+          subPixelX <- [0, 0.2 .. 1]
+          subPixelY <- [0, 0.2 .. 1]
+          let u = (x + subPixelX) / nx
+              v = (y + subPixelY) / ny
+              ray = getRay u v camera
+          return . fmap gammaCorrection $ (color ray world)
 
 (+++) :: String -> String -> String
 (+++) x y = x ++ "\n" ++ y
