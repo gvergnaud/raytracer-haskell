@@ -44,7 +44,7 @@ scatter ray point normal material = do
       let target = point + normal + rand
           scattered = Ray point (target - point)
           attenuation = albedo
-      return $ Just $ ScatterRecord {scattered, attenuation}
+      return . Just $ ScatterRecord {scattered, attenuation}
     (Metal {albedo, fuzz}) -> do
       rand <- getRandomVecInUnitSphere
       let reflected = reflect (unitVector . direction $ ray) (normal)
@@ -75,17 +75,16 @@ scatter ray point normal material = do
                 )
           reflectionProbability = schlickReflectionProbability cosine refractiveIdx
 
-      return $
-        Just $
-          case refract (direction ray) outwardNormal refRatio of
-            Just refracted
-              | rand > reflectionProbability ->
-                ScatterRecord
-                  { scattered = Ray point refracted,
-                    attenuation = Vec3 1 1 1
-                  }
-            _ ->
+      return . Just $
+        case refract (direction ray) outwardNormal refRatio of
+          Just refracted
+            | rand > reflectionProbability ->
               ScatterRecord
-                { scattered = Ray point (reflect (direction ray) normal),
+                { scattered = Ray point refracted,
                   attenuation = Vec3 1 1 1
                 }
+          _ ->
+            ScatterRecord
+              { scattered = Ray point (reflect (direction ray) normal),
+                attenuation = Vec3 1 1 1
+              }

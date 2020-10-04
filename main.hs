@@ -1,6 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 import Camera
+import Control.Concurrent.ParallelIO.Global
 import Control.Monad
 import Data.List
 import GHC.Float
@@ -49,13 +50,6 @@ world =
     Sphere (Vec3 (-0.75) 0 (-1)) 0.5 (Dielectric 1.5)
   ]
 
-camera =
-  Camera
-    (Vec3 0 0 0)
-    (Vec3 (-2) (-1) (-1))
-    (Vec3 4 0 0)
-    (Vec3 0 2 0)
-
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
 
@@ -63,33 +57,34 @@ gammaCorrection :: Vec3 -> Vec3
 gammaCorrection vec =
   Vec3.map sqrt vec
 
-allLines :: Float -> Float -> IO [String]
-allLines nx ny =
-  let getAvgColor x y =
+pixels :: Float -> Float -> IO [String]
+pixels nx ny =
+  let camera = newCamera 90 (nx / ny)
+      getAvgColor x y =
         fmap average $
-          sequence $ do
+          parallel $ do
             subPixelX <- [0.1, 0.3 .. 0.9]
             subPixelY <- [0.1, 0.3 .. 0.9]
             let u = (x + subPixelX) / nx
             let v = (y + subPixelY) / ny
             let ray = getRay u v camera
-            [fmap gammaCorrection $ (color ray world)]
-   in sequence $ do
+            return . fmap gammaCorrection $ (color ray world)
+   in parallel $ do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx -1)]
-        [fmap vecToLine $ getAvgColor x y]
+        return . fmap vecToLine $ getAvgColor x y
 
 (+++) :: String -> String -> String
 (+++) x y = x ++ "\n" ++ y
 
 writeImage :: Int -> Int -> IO ()
 writeImage nx ny = do
-  colorLines <- allLines (int2Float nx) (int2Float ny)
+  pixs <- pixels (int2Float nx) (int2Float ny)
   let image =
         "P3"
           +++ (show nx ++ " " ++ show ny)
           +++ "255"
-          +++ (intercalate "\n" colorLines)
+          +++ (intercalate "\n" pixs)
   writeFile "./img.ppm" image
 
 main :: IO ()
