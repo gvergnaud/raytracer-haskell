@@ -63,8 +63,8 @@ pixels nx ny =
       getAvgColor x y =
         fmap average $
           parallel $ do
-            subPixelX <- [0.1, 0.3 .. 0.9]
-            subPixelY <- [0.1, 0.3 .. 0.9]
+            subPixelX <- [0, 0.2 .. 1]
+            subPixelY <- [0, 0.2 .. 1]
             let u = (x + subPixelX) / nx
             let v = (y + subPixelY) / ny
             let ray = getRay u v camera
