@@ -26,7 +26,7 @@ color' ray@(Ray {direction}) hitable depth =
       case maybeRec of
         Just (ScatterRecord {scattered, attenuation})
           | depth < 50 -> do
-            c <- color' scattered world (depth + 1)
+            c <- color' scattered hitable (depth + 1)
             return $ c * attenuation
         _ -> return $ vec3 0
     Nothing ->
@@ -59,13 +59,13 @@ gammaCorrection vec =
 
 pixels :: Float -> Float -> IO [String]
 pixels nx ny =
-  let camera = newCamera (Vec3 (-2) 2 1) (Vec3 0 0 (-1)) (Vec3 0 1 0) 50 (nx / ny)
+  let camera = newCamera (Vec3 (-1) 0.5 1) (Vec3 0 0 (-1)) (Vec3 0 1 0) 50 (nx / ny)
    in parallel $ do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx -1)]
         return . fmap (vecToLine . average) . sequence $ do
-          subPixelX <- [0, 0.2 .. 1]
-          subPixelY <- [0, 0.2 .. 1]
+          subPixelX <- [0, 0.1 .. 1]
+          subPixelY <- [0, 0.1 .. 1]
           let u = (x + subPixelX) / nx
               v = (y + subPixelY) / ny
               ray = getRay u v camera
@@ -86,4 +86,4 @@ writeImage nx ny = do
 
 main :: IO ()
 main =
-  writeImage 200 100
+  writeImage 400 200
