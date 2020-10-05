@@ -1,15 +1,15 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 import Camera
-import Control.Concurrent.ParallelIO.Global
-import Control.Monad
+import Control.Concurrent.ParallelIO.Global (parallel)
 import Data.List
 import GHC.Float
 import Hitable
 import Material
-import Random
+import Random (getRandomColor, getRandomVector)
 import Ray
 import Sphere
+import System.Random (randomIO)
 import Vec3
 
 blueSky :: Vec3
@@ -42,13 +42,47 @@ vecToLine :: Vec3 -> String
 vecToLine (Vec3 r g b) =
   intercalate " " . fmap (show . floor . (* 255.99)) $ [r, g, b]
 
-world :: [Sphere]
-world =
-  [ Sphere (Vec3 0 (-100.5) (-1)) 100 (Lambertian (Vec3 0.5 0.5 0.5)),
-    Sphere (Vec3 0 0 (-1)) 0.5 (Lambertian (Vec3 0.8 0.3 0.3)),
-    Sphere (Vec3 1 0 (-1)) 0.5 (Metal (Vec3 0.8 0.2 0.2) 0.05),
-    Sphere (Vec3 (-1) 0 (-1)) 0.5 (Dielectric 1.5)
-  ]
+flattenListOfMaybes :: [Maybe a] -> [a]
+flattenListOfMaybes xs =
+  foldr flatten [] xs
+  where
+    flatten x acc =
+      case x of
+        Just v -> v : acc
+        Nothing -> acc
+
+getWorld :: IO [Sphere]
+getWorld = do
+  let spheres =
+        [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.5 0.5 0.5)),
+          Sphere (Vec3 0 1 0) 1 (Dielectric 1.5),
+          Sphere (Vec3 (-3) 1 0) 1 (Lambertian (Vec3 0.4 0.2 0.1)),
+          Sphere (Vec3 3 1 0) 1 (Metal (Vec3 0.7 0.6 0.5) 0)
+        ]
+
+  fmap ((spheres ++) . flattenListOfMaybes) . sequence $ do
+    a <- [(-11), (-8) .. 10]
+    b <- [(-11), (-8) .. 10]
+    return $ do
+      randX <- randomIO :: IO Float
+      randZ <- randomIO :: IO Float
+      let center = Vec3 (a + 0.9 * randX) 0.2 (b + 0.9 * randZ)
+      if vecLength (center - (Vec3 4 0.2 0)) <= 0.0
+        then return Nothing
+        else do
+          randMat <- randomIO :: IO Float
+          case randMat of
+            _
+              | randMat < 0.8 -> do
+                color <- getRandomColor
+                return . Just $ Sphere center 0.2 (Lambertian color)
+            _
+              | randMat < 0.95 -> do
+                randVec <- getRandomVector
+                metalness <- randomIO :: IO Float
+                return . Just $ Sphere center 0.2 (Metal (vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
+            _ -> do
+              return . Just $ Sphere center 0.2 (Dielectric 1.5)
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
@@ -57,26 +91,40 @@ gammaCorrection :: Vec3 -> Vec3
 gammaCorrection vec =
   Vec3.map sqrt vec
 
-pixels :: Float -> Float -> IO [String]
-pixels nx ny =
-  let camera = newCamera (Vec3 (-1) 0.5 1) (Vec3 0 0 (-1)) (Vec3 0 1 0) 50 (nx / ny)
+pixels :: Hitable a => Float -> Float -> a -> IO [String]
+pixels nx ny world =
+  let lookFrom = (Vec3 8 1.7 5)
+      lookAt = (Vec3 0 0.5 (-1))
+      focusDistance = vecLength (lookFrom - lookAt)
+      camera =
+        newCamera
+          lookFrom
+          lookAt
+          (Vec3 0 1 0)
+          30
+          (nx / ny)
+          0.25
+          focusDistance
    in parallel $ do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx -1)]
         return . fmap (vecToLine . average) . sequence $ do
-          subPixelX <- [0, 0.1 .. 1]
-          subPixelY <- [0, 0.1 .. 1]
+          subPixelX <- [0, 0.2 .. 1]
+          subPixelY <- [0, 0.2 .. 1]
           let u = (x + subPixelX) / nx
               v = (y + subPixelY) / ny
-              ray = getRay u v camera
-          return . fmap gammaCorrection $ (color ray world)
+
+          return . fmap gammaCorrection $ do
+            ray <- getRay u v camera
+            color ray world
 
 (+++) :: String -> String -> String
 (+++) x y = x ++ "\n" ++ y
 
 writeImage :: Int -> Int -> IO ()
 writeImage nx ny = do
-  pixs <- pixels (int2Float nx) (int2Float ny)
+  world <- getWorld
+  pixs <- pixels (int2Float nx) (int2Float ny) world
   let image =
         "P3"
           +++ (show nx ++ " " ++ show ny)
@@ -86,4 +134,4 @@ writeImage nx ny = do
 
 main :: IO ()
 main =
-  writeImage 400 200
+  writeImage 200 150
