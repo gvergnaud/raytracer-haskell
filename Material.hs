@@ -27,7 +27,11 @@ refract vec normal refractiveIndicesRatio =
       dt = uv • normal
       discriminant = 1 - refractiveIndicesRatio ** 2 * (1 - dt ** 2)
    in if discriminant > 0
-        then Just $ vec3 refractiveIndicesRatio * (uv - normal * vec3 dt) - normal * (vec3 . sqrt) discriminant
+        then
+          Just $
+            vec3 refractiveIndicesRatio
+              * (uv - normal * vec3 dt) - normal
+              * (vec3 . sqrt) discriminant
         else Nothing
 
 schlickReflectionProbability :: Float -> Float -> Float

@@ -89,43 +89,41 @@ gammaCorrection :: Vec3 -> Vec3
 gammaCorrection vec =
   Vec3.map sqrt vec
 
-colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> [IO Vec3]
-colorForPixel nx ny x y camera world = do
-  subPixelX <- [0, 0.1 .. 1]
-  subPixelY <- [0, 0.1 .. 1]
-  let u = (x + subPixelX) / nx
-      v = (y + subPixelY) / ny
-  return . fmap gammaCorrection $ do
-    ray <- getRay u v camera
-    color ray world
+colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
+colorForPixel nx ny x y camera world =
+  fmap (gammaCorrection . average) . parallel $ do
+    subPixelX <- [0, 0.1 .. 1]
+    subPixelY <- [0, 0.2 .. 1]
+    let u = (x + subPixelX) / nx
+        v = (y + subPixelY) / ny
+    return $ do
+      ray <- getRay u v camera
+      color ray world
 
-pixels :: Hitable a => Float -> Float -> a -> IO [String]
+pixels :: Hitable a => Float -> Float -> a -> [IO String]
 pixels nx ny world =
   let lookFrom = (Vec3 8 1.7 5)
       lookAt = (Vec3 0 0.5 (-1))
       focusDistance = vecLength (lookFrom - lookAt)
       vup = (Vec3 0 1 0)
       camera =
-        newCamera lookFrom lookAt vup 30 (nx / ny) 0.25 focusDistance
-   in parallel $ do
+        newCamera lookFrom lookAt vup 30 (nx / ny) 0.05 focusDistance
+   in do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx -1)]
-        return . fmap (vecToLine . average) . parallel $ colorForPixel nx ny x y camera world
+        return . fmap (vecToLine) $ colorForPixel nx ny x y camera world
 
 (+++) :: String -> String -> String
 (+++) x y = x ++ "\n" ++ y
 
 writeImage :: Int -> Int -> IO ()
 writeImage nx ny = do
+  putStrLn $ "P3" +++ (show nx ++ " " ++ show ny) +++ "255"
   world <- getWorld
-  pixs <- pixels (int2Float nx) (int2Float ny) world
-  let image =
-        "P3"
-          +++ (show nx ++ " " ++ show ny)
-          +++ "255"
-          +++ (intercalate "\n" pixs)
-  writeFile "./img.ppm" image
+  sequence_
+    . fmap (>>= putStrLn)
+    $ pixels (int2Float nx) (int2Float ny) world
 
 main :: IO ()
 main =
-  writeImage 600 400
+  writeImage 200 150
