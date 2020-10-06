@@ -46,10 +46,8 @@ flattenListOfMaybes :: [Maybe a] -> [a]
 flattenListOfMaybes xs =
   foldr flatten [] xs
   where
-    flatten x acc =
-      case x of
-        Just v -> v : acc
-        Nothing -> acc
+    flatten (Just v) acc = v : acc
+    flatten Nothing acc = acc
 
 getWorld :: IO [Sphere]
 getWorld = do
@@ -91,32 +89,28 @@ gammaCorrection :: Vec3 -> Vec3
 gammaCorrection vec =
   Vec3.map sqrt vec
 
+colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> [IO Vec3]
+colorForPixel nx ny x y camera world = do
+  subPixelX <- [0, 0.1 .. 1]
+  subPixelY <- [0, 0.1 .. 1]
+  let u = (x + subPixelX) / nx
+      v = (y + subPixelY) / ny
+  return . fmap gammaCorrection $ do
+    ray <- getRay u v camera
+    color ray world
+
 pixels :: Hitable a => Float -> Float -> a -> IO [String]
 pixels nx ny world =
   let lookFrom = (Vec3 8 1.7 5)
       lookAt = (Vec3 0 0.5 (-1))
       focusDistance = vecLength (lookFrom - lookAt)
+      vup = (Vec3 0 1 0)
       camera =
-        newCamera
-          lookFrom
-          lookAt
-          (Vec3 0 1 0)
-          30
-          (nx / ny)
-          0.25
-          focusDistance
+        newCamera lookFrom lookAt vup 30 (nx / ny) 0.25 focusDistance
    in parallel $ do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx -1)]
-        return . fmap (vecToLine . average) . sequence $ do
-          subPixelX <- [0, 0.2 .. 1]
-          subPixelY <- [0, 0.2 .. 1]
-          let u = (x + subPixelX) / nx
-              v = (y + subPixelY) / ny
-
-          return . fmap gammaCorrection $ do
-            ray <- getRay u v camera
-            color ray world
+        return . fmap (vecToLine . average) . parallel $ colorForPixel nx ny x y camera world
 
 (+++) :: String -> String -> String
 (+++) x y = x ++ "\n" ++ y
@@ -134,4 +128,4 @@ writeImage nx ny = do
 
 main :: IO ()
 main =
-  writeImage 200 150
+  writeImage 600 400
