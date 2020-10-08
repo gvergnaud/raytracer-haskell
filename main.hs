@@ -6,7 +6,7 @@ import Data.List
 import GHC.Float
 import Hitable
 import Material
-import Random (getRandomColor, getRandomVector)
+import Random (getRandomColor, getRandomItem, getRandomVector)
 import Ray
 import Sphere
 import System.Random (randomIO)
@@ -17,6 +17,24 @@ blueSky = Vec3 0.5 0.7 1
 
 white :: Vec3
 white = vec3 1
+
+sphereColors :: [Vec3]
+sphereColors =
+  fmap
+    (vmap (/ 255))
+    [ -- Hot
+      Vec3 232 120 12,
+      Vec3 255 163 13,
+      Vec3 255 88 0,
+      Vec3 232 56 12,
+      Vec3 255 26 13,
+      -- Cold
+      Vec3 103 191 226,
+      Vec3 69 122 191,
+      Vec3 78 139 191,
+      Vec3 242 242 242,
+      Vec3 143 203 217
+    ]
 
 color' :: Hitable a => Ray -> a -> Float -> IO Vec3
 color' ray@(Ray {direction}) hitable depth =
@@ -51,11 +69,13 @@ flattenListOfMaybes xs =
 
 getWorld :: IO [Sphere]
 getWorld = do
+  lambColor <- getRandomItem sphereColors
+  metalColor <- getRandomItem sphereColors
   let spheres =
         [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.5 0.5 0.5)),
           Sphere (Vec3 0 1 0) 1 (Dielectric 1.5),
-          Sphere (Vec3 (-3) 1 0) 1 (Lambertian (Vec3 0.4 0.2 0.1)),
-          Sphere (Vec3 3 1 0) 1 (Metal (Vec3 0.7 0.6 0.5) 0)
+          Sphere (Vec3 (-3) 1 0) 1 (Lambertian lambColor),
+          Sphere (Vec3 3 1 0) 1 (Metal metalColor 0)
         ]
 
   fmap ((spheres ++) . flattenListOfMaybes) . sequence $ do
@@ -72,11 +92,11 @@ getWorld = do
           case randMat of
             _
               | randMat < 0.8 -> do
-                color <- getRandomColor
+                color <- getRandomItem sphereColors
                 return . Just $ Sphere center 0.2 (Lambertian color)
             _
               | randMat < 0.95 -> do
-                randVec <- getRandomVector
+                randVec <- getRandomItem sphereColors
                 metalness <- randomIO :: IO Float
                 return . Just $ Sphere center 0.2 (Metal (vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
             _ -> do
@@ -87,7 +107,7 @@ average xs = (sum xs) / genericLength xs
 
 gammaCorrection :: Vec3 -> Vec3
 gammaCorrection vec =
-  Vec3.map sqrt vec
+  vmap sqrt vec
 
 colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
 colorForPixel nx ny x y camera world =
@@ -107,10 +127,10 @@ pixels nx ny world =
       focusDistance = vecLength (lookFrom - lookAt)
       vup = (Vec3 0 1 0)
       camera =
-        newCamera lookFrom lookAt vup 30 (nx / ny) 0.05 focusDistance
+        newCamera lookFrom lookAt vup 30 (nx / ny) 0.02 focusDistance
    in do
         y <- reverse [0 .. ny]
-        x <- [0 .. (nx -1)]
+        x <- [0 .. (nx - 1)]
         return . fmap (vecToLine) $ colorForPixel nx ny x y camera world
 
 (+++) :: String -> String -> String
@@ -126,4 +146,4 @@ writeImage nx ny = do
 
 main :: IO ()
 main =
-  writeImage 200 150
+  writeImage 200 100

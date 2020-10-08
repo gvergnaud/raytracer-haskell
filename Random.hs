@@ -38,3 +38,7 @@ getRandomColor = do
   z1 <- randomIO :: IO Float
   z2 <- randomIO :: IO Float
   return $ Vec3 (x1 * x2) (y1 * y2) (z1 * z2)
+
+getRandomItem :: [a] -> IO a
+getRandomItem xs =
+  (xs !!) <$> randomRIO (0, length xs - 1)

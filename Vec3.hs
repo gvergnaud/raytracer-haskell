@@ -26,8 +26,16 @@ instance Fractional Vec3 where
   (Vec3 a b c) / (Vec3 d e f) = Vec3 (a / d) (b / e) (c / f)
   fromRational a = (Vec3 (fromRational a) (fromRational a) (fromRational a))
 
-map :: (Float -> Float) -> Vec3 -> Vec3
-map f (Vec3 x y z) = Vec3 (f x) (f y) (f z)
+vmap :: (Float -> Float) -> Vec3 -> Vec3
+vmap f (Vec3 x y z) = Vec3 (f x) (f y) (f z)
+
+vmin :: Vec3 -> Vec3 -> Vec3
+vmin (Vec3 x y z) (Vec3 x' y' z') =
+  Vec3 (min x x') (min y y') (min z z')
+
+vmax :: Vec3 -> Vec3 -> Vec3
+vmax (Vec3 x y z) (Vec3 x' y' z') =
+  Vec3 (max x x') (max y y') (max z z')
 
 squaredLength :: Vec3 -> Float
 squaredLength (Vec3 x y z) = (x ** 2) + (y ** 2) + (z ** 2)

@@ -2,6 +2,7 @@
 
 module Sphere where
 
+import AABB
 import Hitable
 import Material
 import Ray
@@ -17,6 +18,9 @@ isBetween :: Float -> Float -> Float -> Bool
 isBetween min max value = value > min && value < max
 
 instance Hitable Sphere where
+  boundingBox tMin tMax (Sphere center radius material) =
+    Just $ AABB (center - vec3 radius) (center + vec3 radius)
+
   hit ray@(Ray origin direction) tMin tMax sphere@(Sphere center radius material) =
     {-
     The equation of a sphere `s` is :

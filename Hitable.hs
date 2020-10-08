@@ -1,5 +1,6 @@
 module Hitable where
 
+import AABB
 import Material
 import Ray
 import Vec3
@@ -13,8 +14,12 @@ data HitRecord = HitRecord
 
 class Hitable a where
   hit :: Ray -> Float -> Float -> a -> Maybe HitRecord
+  boundingBox :: Float -> Float -> a -> Maybe AABB
 
 instance Hitable a => Hitable [a] where
+  boundingBox tMin tMax list =
+    foldl suroundingBox Nothing . map (boundingBox tMin tMax) $ list
+
   hit ray tMin tMax list =
     foldl pickClosestHit Nothing list
     where
