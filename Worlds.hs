@@ -103,3 +103,52 @@ snowManCamera nx ny =
       focusDistance = vecLength (lookFrom - lookAt)
       vup = (Vec3 0 1 0)
    in newCamera lookFrom lookAt vup 50 (nx / ny) 0.07 focusDistance
+
+pandaWorld :: IO [Sphere]
+pandaWorld = do
+  let white = Vec3 0.95 0.95 0.95
+      black = Vec3 0.06 0.06 0.06
+      truffle position =
+        [ Sphere (position + (Vec3 0 1.8 (0.5))) 0.3 (Lambertian white),
+          Sphere (position + (Vec3 0 1.8 (0.8))) 0.1 (Lambertian black),
+          Sphere (position + (Vec3 (-0.05) 1.8 (0.8))) 0.07 (Lambertian black),
+          Sphere (position + (Vec3 0.05 1.8 (0.8))) 0.07 (Lambertian black)
+        ]
+      eyes position =
+        [ -- eyes fur
+          Sphere (position + (Vec3 (-0.21) 2 (0.55))) 0.13 (Lambertian black),
+          Sphere (position + (Vec3 0.21 2 (0.55))) 0.13 (Lambertian black),
+          -- pupil
+          Sphere (position + (Vec3 (-0.21) 2 (0.65))) 0.065 (Metal (vec3 0.06) 0.05),
+          Sphere (position + (Vec3 0.21 2 (0.65))) 0.065 (Metal (vec3 0.06) 0.05),
+          -- black fur
+          Sphere (position + (Vec3 (-0.27) 1.93 (0.55))) 0.1 (Lambertian black),
+          Sphere (position + (Vec3 0.27 1.93 (0.55))) 0.1 (Lambertian black)
+        ]
+      ears =
+        [ Sphere (Vec3 (-0.7) 2.75 (-0.3)) 0.3 (Lambertian black),
+          Sphere (Vec3 0.7 2.75 (-0.3)) 0.3 (Lambertian black)
+        ]
+  return $
+    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.9 0.9 1)),
+      -- offscreen black ball
+      Sphere (Vec3 3 0.3 (2)) 1.5 (Lambertian black),
+      -- body
+      Sphere (Vec3 0 0.3 (-1)) 1.5 (Metal black 0.2),
+      -- head
+      Sphere (Vec3 0 2 (-0.3)) 0.9 (Lambertian white),
+      -- shoulders
+      Sphere (Vec3 (-1.05) 0.6 (-1)) 0.5 (Lambertian black),
+      Sphere (Vec3 1.05 0.6 (-1)) 0.5 (Lambertian black)
+    ]
+      ++ ears
+      ++ eyes (vec3 0)
+      ++ truffle (Vec3 0 (-0.1) 0)
+
+pandaCamera :: Float -> Float -> Camera
+pandaCamera nx ny =
+  let lookFrom = (Vec3 0 2 3)
+      lookAt = (Vec3 0 1.8 (-1))
+      focusDistance = vecLength (lookFrom - lookAt)
+      vup = (Vec3 0 1 0)
+   in newCamera lookFrom lookAt vup 45 (nx / ny) 0.07 focusDistance
