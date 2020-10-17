@@ -13,15 +13,16 @@ data Sphere = Sphere
     sphereRadius :: Float,
     sphereMaterial :: Material
   }
+  deriving (Show)
 
 isBetween :: Float -> Float -> Float -> Bool
 isBetween min max value = value > min && value < max
 
 instance Hitable Sphere where
-  boundingBox tMin tMax (Sphere center radius material) =
-    Just $ AABB (center - vec3 radius) (center + vec3 radius)
+  boundingBox (tMin, tMax) (Sphere center radius material) =
+    AABB (center - vec3 radius) (center + vec3 radius)
 
-  hit ray@(Ray origin direction) tMin tMax sphere@(Sphere center radius material) =
+  hit ray@(Ray origin direction) (tMin, tMax) sphere@(Sphere center radius material) =
     {-
     The equation of a sphere `s` is :
       ((x - s.center) • (x - s.center)) = s.radius ** 2

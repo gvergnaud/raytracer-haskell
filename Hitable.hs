@@ -13,20 +13,20 @@ data HitRecord = HitRecord
   }
 
 class Hitable a where
-  hit :: Ray -> Float -> Float -> a -> Maybe HitRecord
-  boundingBox :: Float -> Float -> a -> Maybe AABB
+  hit :: Ray -> (Float, Float) -> a -> Maybe HitRecord
+  boundingBox :: (Float, Float) -> a -> AABB
 
 instance Hitable a => Hitable [a] where
-  boundingBox tMin tMax list =
-    foldl suroundingBox Nothing . map (boundingBox tMin tMax) $ list
+  boundingBox range (head : tail) =
+    foldl suroundingBox (boundingBox range head) . map (boundingBox range) $ tail
 
-  hit ray tMin tMax list =
+  hit ray range@(tMin, tMax) list =
     foldl pickClosestHit Nothing list
     where
       pickClosestHit acc item =
         case acc of
-          Nothing -> hit ray tMin tMax item
+          Nothing -> hit ray range item
           Just hitRecord ->
-            case hit ray tMin (t hitRecord) item of
+            case hit ray (tMin, (t hitRecord)) item of
               Just closest -> Just closest
               Nothing -> Just hitRecord

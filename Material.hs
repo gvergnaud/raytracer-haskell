@@ -11,6 +11,7 @@ data Material
   = Lambertian {albedo :: Vec3}
   | Metal {albedo :: Vec3, fuzz :: Float}
   | Dielectric {refractiveIdx :: Float}
+  deriving (Show)
 
 data ScatterRecord = ScatterRecord
   { scattered :: Ray,

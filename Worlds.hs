@@ -10,7 +10,7 @@ import Vec3
 blueSky :: Vec3
 blueSky = Vec3 0.5 0.7 1
 
-color x y z = vmap (/ 255) (Vec3 x y z)
+rgb x y z = vmap (/ 255) (Vec3 x y z)
 
 white :: Vec3
 white = vec3 1
@@ -18,17 +18,17 @@ white = vec3 1
 sphereColors :: [Vec3]
 sphereColors =
   [ -- Hot
-    color 232 120 12,
-    color 255 163 13,
-    color 255 88 0,
-    color 232 56 12,
-    color 255 26 13,
+    rgb 232 120 12,
+    rgb 255 163 13,
+    rgb 255 88 0,
+    rgb 232 56 12,
+    rgb 255 26 13,
     -- Cold
-    color 103 191 226,
-    color 69 122 191,
-    color 78 139 191,
-    color 242 242 242,
-    color 143 203 217
+    rgb 103 191 226,
+    rgb 69 122 191,
+    rgb 78 139 191,
+    rgb 242 242 242,
+    rgb 143 203 217
   ]
 
 flattenListOfMaybes :: [Maybe a] -> [a]
@@ -50,8 +50,8 @@ tutoWorld = do
         ]
 
   fmap ((spheres ++) . flattenListOfMaybes) . sequence $ do
-    a <- [(-11), (-8) .. 10]
-    b <- [(-11), (-8) .. 10]
+    a <- [(-11), (-9) .. 10]
+    b <- [(-11), (-9) .. 10]
     return $ do
       randX <- randomIO :: IO Float
       randZ <- randomIO :: IO Float
@@ -63,8 +63,8 @@ tutoWorld = do
           case randMat of
             _
               | randMat < 0.8 -> do
-                color <- getRandomItem sphereColors
-                return . Just $ Sphere center 0.2 (Lambertian color)
+                rgb <- getRandomItem sphereColors
+                return . Just $ Sphere center 0.2 (Lambertian rgb)
             _
               | randMat < 0.95 -> do
                 randVec <- getRandomItem sphereColors
@@ -85,15 +85,15 @@ snowManWorld :: IO [Sphere]
 snowManWorld = do
   return $
     [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.9 0.9 1)),
-      Sphere (Vec3 0 1 (-1)) 1 (Metal (Vec3 1 1 1) 0.05),
-      Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (Vec3 1 1 1) 0.05),
-      Sphere (Vec3 0 3.4 (-1)) 0.5 (Metal (Vec3 1 1 1) 0.05),
+      Sphere (Vec3 0 1 (-1)) 1 (Metal (Vec3 0.9 0.9 1) 0.05),
+      Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (Vec3 0.9 0.9 1) 0.05),
+      Sphere (Vec3 0 3.4 (-1)) 0.5 (Metal (Vec3 0.9 0.9 1) 0.05),
       -- Balls
-      Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian (color 255 30 30)), -- red
-      Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (color 94 45 138) 0.4), -- purple
-      Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian (color 255 202 0)), -- yellow
-      Sphere (Vec3 4 2.5 4) 2.5 (Lambertian (color 117 117 117)), -- offscreen dark
-      Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian (color 230 14 255)) -- offscreen pink
+      Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian (rgb 255 30 30)), -- red
+      Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (rgb 94 45 138) 0.4), -- purple
+      Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian (rgb 255 202 0)), -- yellow
+      Sphere (Vec3 4 2.5 4) 2.5 (Lambertian (rgb 117 117 117)), -- offscreen dark
+      Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian (rgb 230 14 255)) -- offscreen pink
     ]
 
 snowManCamera :: Float -> Float -> Camera
