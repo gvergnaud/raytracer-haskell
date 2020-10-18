@@ -5,6 +5,7 @@ import Material
 import Random
 import Sphere
 import System.Random
+import Texture
 import Vec3
 
 blueSky :: Vec3
@@ -43,10 +44,10 @@ tutoWorld = do
   lambColor <- getRandomItem sphereColors
   metalColor <- getRandomItem sphereColors
   let spheres =
-        [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.5 0.5 0.5)),
+        [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ CheckedTexture (ConstantTexture white) (ConstantTexture (Vec3 0.1 0.1 0.1))),
           Sphere (Vec3 0 1 0) 1 (Dielectric 1.5),
-          Sphere (Vec3 (-3) 1 0) 1 (Lambertian lambColor),
-          Sphere (Vec3 3 1 0) 1 (Metal metalColor 0)
+          Sphere (Vec3 (-3) 1 0) 1 (Lambertian $ ConstantTexture lambColor),
+          Sphere (Vec3 3 1 0) 1 (Metal (ConstantTexture metalColor) 0)
         ]
 
   fmap ((spheres ++) . flattenListOfMaybes) . sequence $ do
@@ -64,12 +65,12 @@ tutoWorld = do
             _
               | randMat < 0.8 -> do
                 rgb <- getRandomItem sphereColors
-                return . Just $ Sphere center 0.2 (Lambertian rgb)
+                return . Just $ Sphere center 0.2 (Lambertian $ ConstantTexture rgb)
             _
               | randMat < 0.95 -> do
                 randVec <- getRandomItem sphereColors
                 metalness <- randomIO :: IO Float
-                return . Just $ Sphere center 0.2 (Metal (vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
+                return . Just $ Sphere center 0.2 (Metal (ConstantTexture $ vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
             _ -> do
               return . Just $ Sphere center 0.2 (Dielectric 1.5)
 
@@ -84,16 +85,16 @@ tutoCamera nx ny =
 snowManWorld :: IO [Sphere]
 snowManWorld = do
   return $
-    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.9 0.9 1)),
-      Sphere (Vec3 0 1 (-1)) 1 (Metal (Vec3 0.9 0.9 1) 0.05),
-      Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (Vec3 0.9 0.9 1) 0.05),
-      Sphere (Vec3 0 3.4 (-1)) 0.5 (Metal (Vec3 0.9 0.9 1) 0.05),
+    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 1)),
+      Sphere (Vec3 0 1 (-1)) 1 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
+      Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
+      Sphere (Vec3 0 3.4 (-1)) 0.5 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       -- Balls
-      Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian (rgb 255 30 30)), -- red
-      Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (rgb 94 45 138) 0.4), -- purple
-      Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian (rgb 255 202 0)), -- yellow
-      Sphere (Vec3 4 2.5 4) 2.5 (Lambertian (rgb 117 117 117)), -- offscreen dark
-      Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian (rgb 230 14 255)) -- offscreen pink
+      Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian $ ConstantTexture (rgb 255 30 30)), -- red
+      Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (ConstantTexture (rgb 94 45 138)) 0.4), -- purple
+      Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian $ ConstantTexture (rgb 255 202 0)), -- yellow
+      Sphere (Vec3 4 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 117 117 117)), -- offscreen dark
+      Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 230 14 255)) -- offscreen pink
     ]
 
 snowManCamera :: Float -> Float -> Camera
@@ -108,47 +109,47 @@ pandaWorld :: IO [Sphere]
 pandaWorld = do
   let white = Vec3 0.95 0.95 0.95
       black = Vec3 0.06 0.06 0.06
-      truffle position =
-        [ Sphere (position + (Vec3 0 1.8 (0.5))) 0.3 (Lambertian white),
-          Sphere (position + (Vec3 0 1.8 (0.8))) 0.1 (Lambertian black),
-          Sphere (position + (Vec3 (-0.05) 1.8 (0.8))) 0.07 (Lambertian black),
-          Sphere (position + (Vec3 0.05 1.8 (0.8))) 0.07 (Lambertian black)
+      nose position =
+        [ Sphere (position + (Vec3 0 1.8 (0.5))) 0.3 (Lambertian $ ConstantTexture white),
+          Sphere (position + (Vec3 0 1.8 (0.8))) 0.1 (Lambertian $ ConstantTexture black),
+          Sphere (position + (Vec3 (-0.05) 1.8 (0.8))) 0.07 (Lambertian $ ConstantTexture black),
+          Sphere (position + (Vec3 0.05 1.8 (0.8))) 0.07 (Lambertian $ ConstantTexture black)
         ]
       eyes position =
         [ -- eyes fur
-          Sphere (position + (Vec3 (-0.21) 2 (0.55))) 0.13 (Lambertian black),
-          Sphere (position + (Vec3 0.21 2 (0.55))) 0.13 (Lambertian black),
+          Sphere (position + (Vec3 (-0.21) 2 (0.55))) 0.13 (Lambertian $ ConstantTexture black),
+          Sphere (position + (Vec3 0.21 2 (0.55))) 0.13 (Lambertian $ ConstantTexture black),
           -- pupil
-          Sphere (position + (Vec3 (-0.21) 2 (0.65))) 0.065 (Metal (vec3 0.06) 0.05),
-          Sphere (position + (Vec3 0.21 2 (0.65))) 0.065 (Metal (vec3 0.06) 0.05),
+          Sphere (position + (Vec3 (-0.21) 2 (0.68))) 0.045 (Metal (ConstantTexture $ vec3 0.06) 0.05),
+          Sphere (position + (Vec3 0.21 2 (0.68))) 0.045 (Metal (ConstantTexture $ vec3 0.06) 0.05),
           -- black fur
-          Sphere (position + (Vec3 (-0.27) 1.93 (0.55))) 0.1 (Lambertian black),
-          Sphere (position + (Vec3 0.27 1.93 (0.55))) 0.1 (Lambertian black)
+          Sphere (position + (Vec3 (-0.27) 1.93 (0.55))) 0.1 (Lambertian $ ConstantTexture black),
+          Sphere (position + (Vec3 0.27 1.93 (0.55))) 0.1 (Lambertian $ ConstantTexture black)
         ]
       ears =
-        [ Sphere (Vec3 (-0.7) 2.75 (-0.3)) 0.3 (Lambertian black),
-          Sphere (Vec3 0.7 2.75 (-0.3)) 0.3 (Lambertian black)
+        [ Sphere (Vec3 (-0.7) 2.75 (-0.3)) 0.3 (Lambertian $ ConstantTexture black),
+          Sphere (Vec3 0.7 2.75 (-0.3)) 0.3 (Lambertian $ ConstantTexture black)
         ]
   return $
-    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (Vec3 0.9 0.9 1)),
-      -- offscreen black ball
-      Sphere (Vec3 3 0.3 (2)) 1.5 (Lambertian black),
+    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
+      -- offscreen ball
+      Sphere (Vec3 4 1.5 (3)) 2.5 (Lambertian $ ConstantTexture $ vec3 0.5),
       -- body
-      Sphere (Vec3 0 0.3 (-1)) 1.5 (Metal black 0.2),
+      Sphere (Vec3 0 0.3 (-1)) 1.5 (Metal (ConstantTexture black) 0.1),
       -- head
-      Sphere (Vec3 0 2 (-0.3)) 0.9 (Lambertian white),
+      Sphere (Vec3 0 2 (-0.3)) 0.9 (Lambertian $ ConstantTexture white),
       -- shoulders
-      Sphere (Vec3 (-1.05) 0.6 (-1)) 0.5 (Lambertian black),
-      Sphere (Vec3 1.05 0.6 (-1)) 0.5 (Lambertian black)
+      Sphere (Vec3 (-1.05) 0.6 (-0.3)) 0.5 (Lambertian $ ConstantTexture black),
+      Sphere (Vec3 1.05 0.6 (-0.3)) 0.5 (Lambertian $ ConstantTexture black)
     ]
       ++ ears
       ++ eyes (vec3 0)
-      ++ truffle (Vec3 0 (-0.1) 0)
+      ++ nose (Vec3 0 (-0.1) 0)
 
 pandaCamera :: Float -> Float -> Camera
 pandaCamera nx ny =
   let lookFrom = (Vec3 0 2 3)
-      lookAt = (Vec3 0 1.8 (-1))
+      lookAt = (Vec3 0 1.8 (0.5))
       focusDistance = vecLength (lookFrom - lookAt)
       vup = (Vec3 0 1 0)
    in newCamera lookFrom lookAt vup 45 (nx / ny) 0.07 focusDistance

@@ -5,11 +5,12 @@ module Material where
 import Random
 import Ray
 import System.Random (randomIO)
+import Texture
 import Vec3
 
 data Material
-  = Lambertian {albedo :: Vec3}
-  | Metal {albedo :: Vec3, fuzz :: Float}
+  = Lambertian Texture
+  | Metal {albedo :: Texture, fuzz :: Float}
   | Dielectric {refractiveIdx :: Float}
   deriving (Show)
 
@@ -44,11 +45,11 @@ schlickReflectionProbability cosine refractiveIdx =
 scatter :: Ray -> Vec3 -> Vec3 -> Material -> IO (Maybe ScatterRecord)
 scatter ray point normal material = do
   case material of
-    (Lambertian {albedo}) -> do
+    (Lambertian tex) -> do
       rand <- getRandomVecInUnitSphere
       let target = point + normal + rand
           scattered = Ray point (target - point)
-          attenuation = albedo
+          attenuation = textureValue 0 0 point tex
       return . Just $ ScatterRecord {scattered, attenuation}
     (Metal {albedo, fuzz}) -> do
       rand <- getRandomVecInUnitSphere
@@ -58,7 +59,7 @@ scatter ray point normal material = do
               { origin = point,
                 direction = reflected + vec3 fuzz * rand
               }
-          attenuation = albedo
+          attenuation = textureValue 0 0 point albedo
       return $
         if (direction scattered) • normal > 0
           then Just $ ScatterRecord {scattered, attenuation}

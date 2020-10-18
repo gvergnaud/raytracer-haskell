@@ -42,7 +42,7 @@ gammaCorrection vec =
 colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
 colorForPixel nx ny x y camera world =
   fmap (gammaCorrection . average) . parallel $ do
-    subPixelX <- [0, 0.2 .. 1]
+    subPixelX <- [0, 0.1 .. 1]
     subPixelY <- [0, 0.2 .. 1]
     let u = (x + subPixelX) / nx
         v = (y + subPixelY) / ny
@@ -56,7 +56,7 @@ vecToColorStr (Vec3 r g b) =
 
 pixels :: Hitable a => Float -> Float -> a -> [IO String]
 pixels nx ny world =
-  let camera = Worlds.pandaCamera nx ny
+  let camera = Worlds.tutoCamera nx ny
    in do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx - 1)]
@@ -65,7 +65,7 @@ pixels nx ny world =
 writeImage :: Int -> Int -> IO ()
 writeImage nx ny = do
   putStrLn $ "P3" ++ "\n" ++ (show nx ++ " " ++ show ny) ++ "\n" ++ "255"
-  world <- Worlds.pandaWorld
+  world <- Worlds.tutoWorld
   tree <- createTree initialTRange world
   sequence_
     . fmap (>>= putStrLn)
@@ -73,4 +73,4 @@ writeImage nx ny = do
 
 main :: IO ()
 main =
-  writeImage 600 400
+  writeImage 300 200
