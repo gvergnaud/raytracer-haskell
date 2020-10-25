@@ -5,6 +5,7 @@ module Sphere where
 import AABB
 import Hitable
 import Material
+import Math
 import Ray
 import Vec3
 
@@ -15,8 +16,13 @@ data Sphere = Sphere
   }
   deriving (Show)
 
-isBetween :: Float -> Float -> Float -> Bool
-isBetween min max value = value > min && value < max
+getSphereUV :: Vec3 -> (Float, Float)
+getSphereUV point@(Vec3 x y z) =
+  let phi = atan2 z x
+      theta = asin y
+      u = 1 - (phi + pi) / (2 * pi)
+      v = (theta + pi / 2) / pi
+   in (u, v)
 
 instance Hitable Sphere where
   boundingBox (tMin, tMax) (Sphere center radius material) =
@@ -74,7 +80,8 @@ instance Hitable Sphere where
                     then
                       let point = pointAtParameter t ray
                           normal = (point - center) / vec3 radius
-                       in Just $ HitRecord {t, point, normal, material}
+                          (u, v) = getSphereUV point
+                       in Just $ HitRecord {t, u, v, point, normal, material}
                     else Nothing
                 t1 = ((- b - sqrt (b ** 2 - a * c)) / a)
                 t2 = ((- b + sqrt (b ** 2 - a * c)) / a)

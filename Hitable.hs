@@ -7,6 +7,8 @@ import Vec3
 
 data HitRecord = HitRecord
   { t :: Float,
+    u :: Float,
+    v :: Float,
     point :: Vec3,
     normal :: Vec3,
     material :: Material

@@ -1,8 +1,10 @@
 module Worlds where
 
 import Camera
+import Hitable
 import Material
 import Random
+import Rectangle
 import Sphere
 import System.Random
 import Texture
@@ -153,3 +155,28 @@ pandaCamera nx ny =
       focusDistance = vecLength (lookFrom - lookAt)
       vup = (Vec3 0 1 0)
    in newCamera lookFrom lookAt vup 45 (nx / ny) 0.07 focusDistance
+
+data HitableStuff = S Sphere | R Rectangle
+
+instance Hitable HitableStuff where
+  boundingBox range (S x) = boundingBox range x
+  boundingBox range (R x) = boundingBox range x
+  hit ray range (S x) = hit ray range x
+  hit ray range (R x) = hit ray range x
+
+lightWorld :: IO [HitableStuff]
+lightWorld = do
+  return
+    [ S $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
+      S $ Sphere (Vec3 0 (2) 0) 2 (Lambertian $ ConstantTexture (Vec3 0.3 0.9 0.95)),
+      -- S $ Sphere (Vec3 0 (7) 0) 1 (DiffuseLight $ ConstantTexture (vec3 4)),
+      R $ XYRectangle (3, 5) (1, 3) (-2) (DiffuseLight $ ConstantTexture $ vec3 4)
+    ]
+
+lightCamera :: Float -> Float -> Camera
+lightCamera nx ny =
+  let lookFrom = (Vec3 8 1.7 3)
+      lookAt = (Vec3 0 2 0)
+      focusDistance = vecLength (lookFrom - lookAt)
+      vup = (Vec3 0 1 0)
+   in newCamera lookFrom lookAt vup 50 (nx / ny) 0 focusDistance
