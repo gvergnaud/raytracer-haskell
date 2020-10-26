@@ -7,7 +7,8 @@ import Control.Monad (guard)
 import Hitable
 import Material
 import Math
-import Ray
+import Ray (Ray (..), pointAtParameter)
+import Transform
 import Vec3
 
 data Rectangle
@@ -57,12 +58,12 @@ hitRectangle
     -- touch = Vec3 touchX touchY k
     let t = (k - (getK origin)) / (getK direction)
 
-    guard (isBetween t0 t1 t)
+    guard $ isBetween t0 t1 t
 
     let a = (getA origin) + (t * getA direction)
         b = (getB origin) + (t * getB direction)
 
-    guard ((isBetween a0 a1 a) && (isBetween b0 b1 b))
+    guard $ isBetween a0 a1 a && isBetween b0 b1 b
 
     return $
       HitRecord
@@ -90,3 +91,24 @@ instance Hitable Rectangle where
     hitRectangle ray range (xRange, zRange, y) (getX, getZ, getY) material (Vec3 0 1 0)
   hit ray range (YZRectangle yRange zRange x material) =
     hitRectangle ray range (yRange, zRange, x) (getY, getZ, getX) material (Vec3 1 0 0)
+
+data Box = Box {pmin :: Vec3, pmax :: Vec3, hitable :: [SomeHitable]}
+
+createBox :: Vec3 -> Vec3 -> Material -> Box
+createBox pmin pmax material =
+  let xRange = (getX pmin, getX pmax)
+      yRange = (getY pmin, getY pmax)
+      zRange = (getZ pmin, getZ pmax)
+      hitable =
+        [ SomeHitable $ XYRectangle xRange yRange (getZ pmax) material,
+          SomeHitable $ FlipNormal $ XYRectangle xRange yRange (getZ pmin) material,
+          SomeHitable $ XZRectangle xRange zRange (getY pmax) material,
+          SomeHitable $ FlipNormal $ XZRectangle xRange zRange (getY pmin) material,
+          SomeHitable $ YZRectangle yRange zRange (getX pmax) material,
+          SomeHitable $ FlipNormal $ YZRectangle yRange zRange (getX pmin) material
+        ]
+   in Box {pmin, pmax, hitable}
+
+instance Hitable Box where
+  boundingBox range (Box {hitable}) = boundingBox range hitable
+  hit ray range (Box {hitable}) = hit ray range hitable

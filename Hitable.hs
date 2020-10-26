@@ -1,3 +1,5 @@
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Hitable where
@@ -20,6 +22,13 @@ class Hitable a where
   hit :: Ray -> (Float, Float) -> a -> Maybe HitRecord
   boundingBox :: (Float, Float) -> a -> AABB
 
+data SomeHitable :: * where
+  SomeHitable :: Hitable a => a -> SomeHitable
+
+instance Hitable SomeHitable where
+  boundingBox range (SomeHitable x) = boundingBox range x
+  hit ray range (SomeHitable x) = hit ray range x
+
 instance Hitable a => Hitable [a] where
   boundingBox range (head : tail) =
     foldl suroundingBox (boundingBox range head) . map (boundingBox range) $ tail
@@ -34,21 +43,3 @@ instance Hitable a => Hitable [a] where
             case hit ray (tMin, (t hitRecord)) item of
               Just closest -> Just closest
               Nothing -> Just hitRecord
-
-data FlipNormal a = FlipNormal a
-
-instance Hitable a => Hitable (FlipNormal a) where
-  boundingBox range (FlipNormal hitable) =
-    boundingBox range hitable
-
-  hit ray range (FlipNormal hitable) = do
-    record@(HitRecord {t, u, v, point, normal, material}) <- hit ray range hitable
-    return $
-      HitRecord
-        { t,
-          u,
-          v,
-          point,
-          normal = - normal,
-          material
-        }

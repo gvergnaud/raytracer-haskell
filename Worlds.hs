@@ -1,6 +1,3 @@
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-
 module Worlds where
 
 import Camera
@@ -11,6 +8,7 @@ import Rectangle
 import Sphere
 import System.Random
 import Texture
+import Transform
 import Vec3
 
 blueSky :: Vec3
@@ -159,13 +157,6 @@ pandaCamera nx ny =
       vup = (Vec3 0 1 0)
    in newCamera lookFrom lookAt vup 45 (nx / ny) 0.07 focusDistance
 
-data SomeHitable :: * where
-  SomeHitable :: Hitable a => a -> SomeHitable
-
-instance Hitable SomeHitable where
-  boundingBox range (SomeHitable x) = boundingBox range x
-  hit ray range (SomeHitable x) = hit ray range x
-
 lightWorld :: IO [SomeHitable]
 lightWorld = do
   return
@@ -195,7 +186,9 @@ cornellBoxWorld = do
       SomeHitable $ XZRectangle (213, 343) (227, 332) 554 light,
       SomeHitable $ FlipNormal $ XZRectangle (0, 555) (0, 555) 555 white,
       SomeHitable $ XZRectangle (0, 555) (0, 555) 0 white,
-      SomeHitable $ FlipNormal $ XYRectangle (0, 555) (0, 555) 555 white
+      SomeHitable $ FlipNormal $ XYRectangle (0, 555) (0, 555) 555 white,
+      SomeHitable $ createBox (Vec3 130 0 65) (Vec3 295 165 230) white,
+      SomeHitable $ createBox (Vec3 265 0 295) (Vec3 430 330 460) white
     ]
 
 cornellBoxCamera :: Float -> Float -> Camera
