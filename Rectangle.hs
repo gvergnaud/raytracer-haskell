@@ -32,17 +32,23 @@ data Rectangle
 
 hitRectangle ::
   Ray ->
+  -- t range
   (Float, Float) ->
+  -- a, b, k
   ((Float, Float), (Float, Float), Float) ->
+  -- getA, getB, getK
   (Vec3 -> Float, Vec3 -> Float, Vec3 -> Float) ->
   Material ->
+  -- normal
+  Vec3 ->
   Maybe HitRecord
 hitRectangle
   ray@(Ray {origin, direction})
   (t0, t1)
   ((a0, a1), (b0, b1), k)
   (getA, getB, getK)
-  material = do
+  material
+  normal = do
     -- p(t) = origin + t * direction
     -- k = origin.z + t * direction.z
     -- t = (k - origin.z) / direction.z
@@ -65,7 +71,7 @@ hitRectangle
           t,
           material,
           point = pointAtParameter t ray,
-          normal = Vec3 0 0 1
+          normal
         }
 
 instance Hitable Rectangle where
@@ -77,10 +83,10 @@ instance Hitable Rectangle where
   boundingBox range (YZRectangle {yRange = (y0, y1), zRange = (z0, z1), k}) =
     AABB (Vec3 (k - 0.001) y0 z0) (Vec3 (k + 0.001) y1 z1)
 
-  -- hit :: Ray -> (Float, Float) -> XYRectangle -> Maybe HitRecord
+  -- hit :: Ray -> (Float, Float) ->  Rectangle -> Maybe HitRecord
   hit ray range (XYRectangle xRange yRange z material) =
-    hitRectangle ray range (xRange, yRange, z) (getX, getY, getZ) material
+    hitRectangle ray range (xRange, yRange, z) (getX, getY, getZ) material (Vec3 0 0 1)
   hit ray range (XZRectangle xRange zRange y material) =
-    hitRectangle ray range (xRange, zRange, y) (getX, getZ, getY) material
+    hitRectangle ray range (xRange, zRange, y) (getX, getZ, getY) material (Vec3 0 1 0)
   hit ray range (YZRectangle yRange zRange x material) =
-    hitRectangle ray range (yRange, zRange, x) (getY, getZ, getX) material
+    hitRectangle ray range (yRange, zRange, x) (getY, getZ, getX) material (Vec3 1 0 0)

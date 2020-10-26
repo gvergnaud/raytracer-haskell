@@ -51,6 +51,7 @@ colorForPixel nx ny x y camera world =
   fmap (gammaCorrection . average) . parallel $ do
     subPixelX <- [0, 0.1 .. 1]
     subPixelY <- [0, 0.1 .. 1]
+    _sample <- [1 .. 3]
     let u = (x + subPixelX) / nx
         v = (y + subPixelY) / ny
     return $ do
@@ -63,7 +64,7 @@ vecToColorStr (Vec3 r g b) =
 
 pixels :: Hitable a => Float -> Float -> a -> [IO String]
 pixels nx ny world =
-  let camera = Worlds.lightCamera nx ny
+  let camera = Worlds.cornellBoxCamera nx ny
    in do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx - 1)]
@@ -72,7 +73,7 @@ pixels nx ny world =
 writeImage :: Int -> Int -> IO ()
 writeImage nx ny = do
   putStrLn $ "P3" ++ "\n" ++ (show nx ++ " " ++ show ny) ++ "\n" ++ "255"
-  world <- Worlds.lightWorld
+  world <- Worlds.cornellBoxWorld
   tree <- createTree initialTRange world
   sequence_
     . fmap (>>= putStrLn)

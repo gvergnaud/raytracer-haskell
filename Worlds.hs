@@ -1,3 +1,6 @@
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+
 module Worlds where
 
 import Camera
@@ -156,21 +159,20 @@ pandaCamera nx ny =
       vup = (Vec3 0 1 0)
    in newCamera lookFrom lookAt vup 45 (nx / ny) 0.07 focusDistance
 
-data HitableStuff = S Sphere | R Rectangle
+data SomeHitable :: * where
+  SomeHitable :: Hitable a => a -> SomeHitable
 
-instance Hitable HitableStuff where
-  boundingBox range (S x) = boundingBox range x
-  boundingBox range (R x) = boundingBox range x
-  hit ray range (S x) = hit ray range x
-  hit ray range (R x) = hit ray range x
+instance Hitable SomeHitable where
+  boundingBox range (SomeHitable x) = boundingBox range x
+  hit ray range (SomeHitable x) = hit ray range x
 
-lightWorld :: IO [HitableStuff]
+lightWorld :: IO [SomeHitable]
 lightWorld = do
   return
-    [ S $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
-      S $ Sphere (Vec3 0 (2) 0) 2 (Lambertian $ ConstantTexture (Vec3 0.3 0.9 0.95)),
+    [ SomeHitable $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
+      SomeHitable $ Sphere (Vec3 0 (2) 0) 2 (Lambertian $ ConstantTexture (Vec3 0.3 0.9 0.95)),
       -- S $ Sphere (Vec3 0 (7) 0) 1 (DiffuseLight $ ConstantTexture (vec3 4)),
-      R $ XYRectangle (3, 5) (1, 3) (-2) (DiffuseLight $ ConstantTexture $ vec3 4)
+      SomeHitable $ XYRectangle (3, 5) (1, 3) (-2) (DiffuseLight $ ConstantTexture $ vec3 4)
     ]
 
 lightCamera :: Float -> Float -> Camera
@@ -180,3 +182,28 @@ lightCamera nx ny =
       focusDistance = vecLength (lookFrom - lookAt)
       vup = (Vec3 0 1 0)
    in newCamera lookFrom lookAt vup 50 (nx / ny) 0 focusDistance
+
+cornellBoxWorld :: IO [SomeHitable]
+cornellBoxWorld = do
+  let red = Lambertian $ ConstantTexture $ Vec3 0.65 0.05 0.05
+      white = Lambertian $ ConstantTexture $ vec3 0.73
+      green = Lambertian $ ConstantTexture $ Vec3 0.12 0.45 0.15
+      light = DiffuseLight $ ConstantTexture $ vec3 15
+  return $
+    [ SomeHitable $ FlipNormal $ YZRectangle (0, 555) (0, 555) 555 green,
+      SomeHitable $ YZRectangle (0, 555) (0, 555) 0 red,
+      SomeHitable $ XZRectangle (213, 343) (227, 332) 554 light,
+      SomeHitable $ FlipNormal $ XZRectangle (0, 555) (0, 555) 555 white,
+      SomeHitable $ XZRectangle (0, 555) (0, 555) 0 white,
+      SomeHitable $ FlipNormal $ XYRectangle (0, 555) (0, 555) 555 white
+    ]
+
+cornellBoxCamera :: Float -> Float -> Camera
+cornellBoxCamera nx ny =
+  let lookFrom = Vec3 278 278 (-800)
+      lookAt = Vec3 278 278 0
+      focusDistance = 10
+      aperture = 0
+      fov = 40
+      vup = Vec3 0 1 0
+   in newCamera lookFrom lookAt vup fov (nx / ny) aperture focusDistance

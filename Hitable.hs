@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Hitable where
 
 import AABB
@@ -32,3 +34,21 @@ instance Hitable a => Hitable [a] where
             case hit ray (tMin, (t hitRecord)) item of
               Just closest -> Just closest
               Nothing -> Just hitRecord
+
+data FlipNormal a = FlipNormal a
+
+instance Hitable a => Hitable (FlipNormal a) where
+  boundingBox range (FlipNormal hitable) =
+    boundingBox range hitable
+
+  hit ray range (FlipNormal hitable) = do
+    record@(HitRecord {t, u, v, point, normal, material}) <- hit ray range hitable
+    return $
+      HitRecord
+        { t,
+          u,
+          v,
+          point,
+          normal = - normal,
+          material
+        }
