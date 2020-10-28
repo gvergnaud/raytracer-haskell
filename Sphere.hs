@@ -3,6 +3,7 @@
 module Sphere where
 
 import AABB
+import Control.Monad
 import Hitable
 import Material
 import Math
@@ -28,7 +29,7 @@ instance Hitable Sphere where
   boundingBox (tMin, tMax) (Sphere center radius material) =
     AABB (center - vec3 radius) (center + vec3 radius)
 
-  hit ray@(Ray origin direction) (tMin, tMax) sphere@(Sphere center radius material) =
+  hit ray@(Ray origin direction) (tMin, tMax) sphere@(Sphere center radius material) = do
     {-
     The equation of a sphere `s` is :
       ((x - s.center) • (x - s.center)) = s.radius ** 2
@@ -73,20 +74,19 @@ instance Hitable Sphere where
         b = (oc • direction)
         c = (oc • oc) - radius ** 2
         discriminant = b ** 2 - a * c
-     in if discriminant > 0
-          then
-            let getRecord t =
-                  if isBetween tMin tMax t
-                    then
-                      let point = pointAtParameter t ray
-                          normal = (point - center) / vec3 radius
-                          (u, v) = getSphereUV point
-                       in Just $ HitRecord {t, u, v, point, normal, material}
-                    else Nothing
-                t1 = ((- b - sqrt (b ** 2 - a * c)) / a)
-                t2 = ((- b + sqrt (b ** 2 - a * c)) / a)
-             in case (getRecord t1, getRecord t2) of
-                  (Just record, _) -> Just record
-                  (_, Just record) -> Just record
-                  _ -> Nothing
-          else Nothing
+
+    guard $ discriminant > 0
+
+    let getRecord t = do
+          guard $ isBetween tMin tMax t
+          let point = pointAtParameter t ray
+              normal = (point - center) / vec3 radius
+              (u, v) = getSphereUV point
+           in Just $ HitRecord {t, u, v, point, normal, material}
+        t1 = ((- b - sqrt (b ** 2 - a * c)) / a)
+        t2 = ((- b + sqrt (b ** 2 - a * c)) / a)
+     in case (getRecord t1, getRecord t2) of
+          (Just record1, Just record2) -> if (t1 < t2) then Just record1 else Just record2
+          (Just record, _) -> Just record
+          (_, Just record) -> Just record
+          _ -> Nothing

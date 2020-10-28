@@ -20,17 +20,7 @@ data Tree a
 instance Show a => Show (Tree a) where
   show (Node {box, left, right}) =
     let addTab = intercalate "\n" . fmap ("\t" ++) . splitOn "\n"
-     in "Node (\n"
-          ++ "\tbox = "
-          ++ show box
-          ++ "\n"
-          ++ "\tleft = "
-          ++ (addTab . show $ left)
-          ++ "\n"
-          ++ "\tright = "
-          ++ (addTab . show $ right)
-          ++ "\n"
-          ++ ")"
+     in "Node (\n" ++ "\tbox = " ++ show box ++ "\n" ++ "\tleft = " ++ (addTab . show $ left) ++ "\n" ++ "\tright = " ++ (addTab . show $ right) ++ "\n" ++ ")"
   show (Leaf x) =
     "Leaf (" ++ show x ++ ")"
 

@@ -95,17 +95,17 @@ instance Hitable Rectangle where
 data Box = Box {pmin :: Vec3, pmax :: Vec3, hitable :: [SomeHitable]}
 
 createBox :: Vec3 -> Vec3 -> Material -> Box
-createBox pmin pmax material =
-  let xRange = (getX pmin, getX pmax)
-      yRange = (getY pmin, getY pmax)
-      zRange = (getZ pmin, getZ pmax)
+createBox pmin@(Vec3 xmin ymin zmin) pmax@(Vec3 xmax ymax zmax) material =
+  let xRange = (xmin, xmax)
+      yRange = (ymin, ymax)
+      zRange = (zmin, zmax)
       hitable =
-        [ SomeHitable $ XYRectangle xRange yRange (getZ pmax) material,
-          SomeHitable $ FlipNormal $ XYRectangle xRange yRange (getZ pmin) material,
-          SomeHitable $ XZRectangle xRange zRange (getY pmax) material,
-          SomeHitable $ FlipNormal $ XZRectangle xRange zRange (getY pmin) material,
-          SomeHitable $ YZRectangle yRange zRange (getX pmax) material,
-          SomeHitable $ FlipNormal $ YZRectangle yRange zRange (getX pmin) material
+        [ SomeHitable $ XYRectangle xRange yRange zmax material,
+          SomeHitable $ FlipNormal $ XYRectangle xRange yRange zmin material,
+          SomeHitable $ XZRectangle xRange zRange ymax material,
+          SomeHitable $ FlipNormal $ XZRectangle xRange zRange ymin material,
+          SomeHitable $ YZRectangle yRange zRange xmax material,
+          SomeHitable $ FlipNormal $ YZRectangle yRange zRange xmin material
         ]
    in Box {pmin, pmax, hitable}
 
