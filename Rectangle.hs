@@ -77,11 +77,11 @@ hitRectangle
 
 instance Hitable Rectangle where
   -- boundingBox :: (Float, Float) -> a -> AABB
-  boundingBox range (XYRectangle {xRange = (x0, x1), yRange = (y0, y1), k}) =
+  boundingBox _ (XYRectangle {xRange = (x0, x1), yRange = (y0, y1), k}) =
     AABB (Vec3 x0 y0 (k - 0.001)) (Vec3 x1 y1 (k + 0.001))
-  boundingBox range (XZRectangle {xRange = (x0, x1), zRange = (z0, z1), k}) =
+  boundingBox _ (XZRectangle {xRange = (x0, x1), zRange = (z0, z1), k}) =
     AABB (Vec3 x0 (k - 0.001) z0) (Vec3 x1 (k + 0.001) z1)
-  boundingBox range (YZRectangle {yRange = (y0, y1), zRange = (z0, z1), k}) =
+  boundingBox _ (YZRectangle {yRange = (y0, y1), zRange = (z0, z1), k}) =
     AABB (Vec3 (k - 0.001) y0 z0) (Vec3 (k + 0.001) y1 z1)
 
   -- hit :: Ray -> (Float, Float) ->  Rectangle -> Maybe HitRecord
@@ -101,11 +101,11 @@ createBox pmin@(Vec3 xmin ymin zmin) pmax@(Vec3 xmax ymax zmax) material =
       zRange = (zmin, zmax)
       hitable =
         [ SomeHitable $ XYRectangle xRange yRange zmax material,
-          SomeHitable $ FlipNormal $ XYRectangle xRange yRange zmin material,
+          SomeHitable $ flipNormal $ XYRectangle xRange yRange zmin material,
           SomeHitable $ XZRectangle xRange zRange ymax material,
-          SomeHitable $ FlipNormal $ XZRectangle xRange zRange ymin material,
+          SomeHitable $ flipNormal $ XZRectangle xRange zRange ymin material,
           SomeHitable $ YZRectangle yRange zRange xmax material,
-          SomeHitable $ FlipNormal $ YZRectangle yRange zRange xmin material
+          SomeHitable $ flipNormal $ YZRectangle yRange zRange xmin material
         ]
    in Box {pmin, pmax, hitable}
 

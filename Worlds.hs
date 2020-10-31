@@ -181,14 +181,14 @@ cornellBoxWorld = do
       green = Lambertian $ ConstantTexture $ Vec3 0.12 0.45 0.15
       light = DiffuseLight $ ConstantTexture $ vec3 15
   return $
-    [ SomeHitable $ FlipNormal $ YZRectangle (0, 555) (0, 555) 555 green,
+    [ SomeHitable $ flipNormal $ YZRectangle (0, 555) (0, 555) 555 green,
       SomeHitable $ YZRectangle (0, 555) (0, 555) 0 red,
       SomeHitable $ XZRectangle (213, 343) (227, 332) 554 light,
-      SomeHitable $ FlipNormal $ XZRectangle (0, 555) (0, 555) 555 white,
+      SomeHitable $ flipNormal $ XZRectangle (0, 555) (0, 555) 555 white,
       SomeHitable $ XZRectangle (0, 555) (0, 555) 0 white,
-      SomeHitable $ FlipNormal $ XYRectangle (0, 555) (0, 555) 555 white,
-      SomeHitable $ createBox (Vec3 130 0 65) (Vec3 295 165 230) white,
-      SomeHitable $ createBox (Vec3 265 0 295) (Vec3 430 330 460) white
+      SomeHitable $ flipNormal $ XYRectangle (0, 555) (0, 555) 555 white,
+      SomeHitable $ translate (Vec3 130 0 65) $ rotateY (-18) $ createBox (Vec3 0 0 0) (Vec3 165 165 165) white,
+      SomeHitable $ translate (Vec3 265 0 295) $ rotateY (15) $ createBox (Vec3 0 0 0) (Vec3 165 330 165) white
     ]
 
 cornellBoxCamera :: Float -> Float -> Camera

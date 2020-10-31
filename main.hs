@@ -35,9 +35,9 @@ rayColor ray hitable =
                   return $ emitted + c * attenuation
               _ -> return $ emitted
           Nothing ->
-            -- return $ vec3 0
-            return $ skyColor direction
-   in colorRec ray hitable 0
+            return $ vec3 0
+   in -- return $ skyColor direction
+      colorRec ray hitable 0
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
@@ -49,8 +49,8 @@ gammaCorrection vec =
 colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
 colorForPixel nx ny x y camera world =
   fmap (gammaCorrection . average) . parallel $ do
-    subPixelX <- [0, 0.1 .. 1]
-    subPixelY <- [0, 0.2 .. 1]
+    subPixelX <- [0, 0.05 .. 1]
+    subPixelY <- [0, 0.1 .. 1]
     let u = (x + subPixelX) / nx
         v = (y + subPixelY) / ny
     return $ do
@@ -63,7 +63,7 @@ vecToColorStr (Vec3 r g b) =
 
 pixels :: Hitable a => Float -> Float -> a -> [IO String]
 pixels nx ny world =
-  let camera = Worlds.snowManCamera nx ny
+  let camera = Worlds.cornellBoxCamera nx ny
    in do
         y <- reverse [0 .. ny]
         x <- [0 .. (nx - 1)]
@@ -72,7 +72,7 @@ pixels nx ny world =
 writeImage :: Int -> Int -> IO ()
 writeImage nx ny = do
   putStrLn $ "P3" ++ "\n" ++ (show nx ++ " " ++ show ny) ++ "\n" ++ "255"
-  world <- Worlds.snowManWorld
+  world <- Worlds.cornellBoxWorld
   tree <- createTree initialTRange world
   sequence_
     . fmap (>>= putStrLn)
@@ -80,4 +80,4 @@ writeImage nx ny = do
 
 main :: IO ()
 main =
-  writeImage 200 140
+  writeImage 400 400

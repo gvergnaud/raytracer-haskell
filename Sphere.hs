@@ -85,8 +85,9 @@ instance Hitable Sphere where
            in Just $ HitRecord {t, u, v, point, normal, material}
         t1 = ((- b - sqrt (b ** 2 - a * c)) / a)
         t2 = ((- b + sqrt (b ** 2 - a * c)) / a)
-     in case (getRecord t1, getRecord t2) of
-          (Just record1, Just record2) -> if (t1 < t2) then Just record1 else Just record2
-          (Just record, _) -> Just record
-          (_, Just record) -> Just record
-          _ -> Nothing
+
+    case (getRecord t1, getRecord t2) of
+      (Just record1, Just record2) -> if (t1 < t2) then Just record1 else Just record2
+      (Just record, _) -> Just record
+      (_, Just record) -> Just record
+      _ -> Nothing
