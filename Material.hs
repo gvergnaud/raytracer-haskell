@@ -65,23 +65,23 @@ scatter ray point normal (Metal {albedo, fuzz}) = do
       then Just $ ScatterRecord {scattered, attenuation}
       else Nothing
 --
-scatter ray point normal (Dielectric {refractiveIdx}) = do
+scatter (Ray {direction}) point normal (Dielectric {refractiveIdx}) = do
   rand <- randomIO :: IO Float
   let (outwardNormal, refRatio, cosine) =
-        if (direction ray • normal > 0)
+        if (direction • normal > 0)
           then
             ( - normal,
               refractiveIdx,
-              refractiveIdx * (direction ray • normal) / (vecLength . direction) ray
+              refractiveIdx * (direction • normal) / vecLength direction
             )
           else
             ( normal,
               1 / refractiveIdx,
-              - (direction ray • normal) / (vecLength . direction) ray
+              - (direction • normal) / vecLength direction
             )
       reflectionProbability = schlickReflectionProbability cosine refractiveIdx
   return . Just $
-    case refract (direction ray) outwardNormal refRatio of
+    case refract direction outwardNormal refRatio of
       Just refracted
         | rand > reflectionProbability ->
           ScatterRecord
@@ -90,7 +90,7 @@ scatter ray point normal (Dielectric {refractiveIdx}) = do
             }
       _ ->
         ScatterRecord
-          { scattered = Ray point (reflect (direction ray) normal),
+          { scattered = Ray point (reflect direction normal),
             attenuation = Vec3 1 1 1
           }
 --

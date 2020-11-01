@@ -1,18 +1,14 @@
 module Vec3 where
 
-data Vec3 = Vec3 Float Float Float deriving (Show, Eq)
+data Vec3 = Vec3
+  { getX :: Float,
+    getY :: Float,
+    getZ :: Float
+  }
+  deriving (Show, Eq)
 
 vec3 :: Float -> Vec3
 vec3 f = Vec3 f f f
-
-getX :: Vec3 -> Float
-getX (Vec3 x _ _) = x
-
-getY :: Vec3 -> Float
-getY (Vec3 _ y _) = y
-
-getZ :: Vec3 -> Float
-getZ (Vec3 _ _ z) = z
 
 instance Num Vec3 where
   (Vec3 a b c) + (Vec3 d e f) = Vec3 (a + d) (b + e) (c + f)

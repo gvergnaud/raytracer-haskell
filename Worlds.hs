@@ -188,6 +188,7 @@ cornellBoxWorld = do
       SomeHitable $ XZRectangle (0, 555) (0, 555) 0 white,
       SomeHitable $ flipNormal $ XYRectangle (0, 555) (0, 555) 555 white,
       SomeHitable $ translate (Vec3 130 0 65) $ rotateY (-18) $ createBox (Vec3 0 0 0) (Vec3 165 165 165) white,
+      SomeHitable $ translate (Vec3 195 165 65) $ Sphere (Vec3 0 50 0) 50 (Dielectric 1.5),
       SomeHitable $ translate (Vec3 265 0 295) $ rotateY (15) $ createBox (Vec3 0 0 0) (Vec3 165 330 165) white
     ]
 

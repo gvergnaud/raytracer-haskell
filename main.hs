@@ -1,5 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
+module Main (main) where
+
 import BVH
 import Camera
 import Control.Concurrent.ParallelIO.Global (parallel)
@@ -35,9 +37,8 @@ rayColor ray hitable =
                   return $ emitted + c * attenuation
               _ -> return $ emitted
           Nothing ->
-            return $ vec3 0
-   in -- return $ skyColor direction
-      colorRec ray hitable 0
+            return $ vec3 0 -- skyColor direction
+   in colorRec ray hitable 0
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
@@ -49,8 +50,8 @@ gammaCorrection vec =
 colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
 colorForPixel nx ny x y camera world =
   fmap (gammaCorrection . average) . parallel $ do
-    subPixelX <- [0, 0.05 .. 1]
-    subPixelY <- [0, 0.1 .. 1]
+    subPixelX <- subPixelXs
+    subPixelY <- subPixelYs
     let u = (x + subPixelX) / nx
         v = (y + subPixelY) / ny
     return $ do
@@ -59,25 +60,33 @@ colorForPixel nx ny x y camera world =
 
 vecToColorStr :: Vec3 -> String
 vecToColorStr (Vec3 r g b) =
-  intercalate " " . fmap (show . clamp 0 255 . floor . (* 255.99)) $ [r, g, b]
+  intercalate " " $
+    show <$> clamp 0 255 <$> floor <$> (* 255.99) <$> [r, g, b]
 
-pixels :: Hitable a => Float -> Float -> a -> [IO String]
-pixels nx ny world =
-  let camera = Worlds.cornellBoxCamera nx ny
-   in do
-        y <- reverse [0 .. ny]
-        x <- [0 .. (nx - 1)]
-        return $ vecToColorStr <$> colorForPixel nx ny x y camera world
+pixels :: Hitable a => Float -> Float -> Camera -> a -> [IO String]
+pixels nx ny camera world = do
+  y <- reverse [0 .. ny]
+  x <- [0 .. (nx - 1)]
+  return $ vecToColorStr <$> colorForPixel nx ny x y camera world
 
-writeImage :: Int -> Int -> IO ()
-writeImage nx ny = do
-  putStrLn $ "P3" ++ "\n" ++ (show nx ++ " " ++ show ny) ++ "\n" ++ "255"
-  world <- Worlds.cornellBoxWorld
+writeImage :: Hitable a => Float -> Float -> Camera -> [a] -> IO ()
+writeImage nx ny camera world = do
+  putStrLn $ "P3\n" ++ show (floor nx) ++ " " ++ show (floor ny) ++ "\n255"
   tree <- createTree initialTRange world
   sequence_
     . fmap (>>= putStrLn)
-    $ pixels (int2Float nx) (int2Float ny) $ tree
+    $ pixels nx ny camera tree
+
+subPixelXs :: [Float]
+subPixelXs = [0, 0.1 .. 1]
+
+subPixelYs :: [Float]
+subPixelYs = [0, 0.05 .. 1]
 
 main :: IO ()
-main =
-  writeImage 400 400
+main = do
+  let nx = 200
+      ny = 200
+      camera = Worlds.cornellBoxCamera nx ny
+  world <- Worlds.cornellBoxWorld
+  writeImage nx ny camera world

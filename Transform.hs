@@ -79,6 +79,11 @@ instance Hitable a => Hitable (Rotate a) where
   boundingBox range (RotateY {aabb}) =
     aabb
   hit ray@(Ray {origin, direction}) range (RotateY {hitable, cosTheta, sinTheta, aabb}) = do
+    -- The trick is to first rotate the ray around the Y axis
+    -- And then rotate the hit point and the normal in the opposite direction
+    -- In 2d, a rotation matrix is:
+    --    ((cosTheta, -sinTheta),
+    --     (sinTheta, cosTheta))
     let rotateY' vec =
           Vec3
             (cosTheta * (getX vec) - sinTheta * (getZ vec))
@@ -89,6 +94,7 @@ instance Hitable a => Hitable (Rotate a) where
             (cosTheta * (getX vec) + sinTheta * (getZ vec))
             (getY vec)
             (- sinTheta * (getX vec) + cosTheta * (getZ vec))
+
         rotatedRay = Ray (rotateY' origin) (rotateY' direction)
 
     (HitRecord {point, normal, t, u, v, material}) <- hit rotatedRay range hitable
