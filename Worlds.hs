@@ -9,6 +9,7 @@ import Sphere
 import System.Random
 import Texture
 import Transform
+import Triangle
 import Vec3
 
 blueSky :: Vec3
@@ -201,3 +202,25 @@ cornellBoxCamera nx ny =
       fov = 40
       vup = Vec3 0 1 0
    in newCamera lookFrom lookAt vup fov (nx / ny) aperture focusDistance
+
+triangleWorld :: IO [SomeHitable]
+triangleWorld = do
+  return $
+    [ SomeHitable $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 1)),
+      --
+      SomeHitable $ XYTriangle (-2, 1) (0, 3) (2, 1) (-1) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
+      -- Balls
+      SomeHitable $ Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian $ ConstantTexture (rgb 255 30 30)), -- red
+      SomeHitable $ Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (ConstantTexture (rgb 94 45 138)) 0.4), -- purple
+      SomeHitable $ Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian $ ConstantTexture (rgb 255 202 0)), -- yellow
+      SomeHitable $ Sphere (Vec3 4 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 117 117 117)), -- offscreen dark
+      SomeHitable $ Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 230 14 255)) -- offscreen pink
+    ]
+
+triangleCamera :: Float -> Float -> Camera
+triangleCamera nx ny =
+  let lookFrom = (Vec3 0 4 4)
+      lookAt = (Vec3 0 2.2 (-1))
+      focusDistance = vecLength (lookFrom - lookAt)
+      vup = (Vec3 0 1 0)
+   in newCamera lookFrom lookAt vup 50 (nx / ny) 0.07 focusDistance

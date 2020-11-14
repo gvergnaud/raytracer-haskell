@@ -37,15 +37,14 @@ rayColor ray hitable =
                   return $ emitted + c * attenuation
               _ -> return $ emitted
           Nothing ->
-            return $ vec3 0 -- skyColor direction
+            return $ skyColor direction
    in colorRec ray hitable 0
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
 
 gammaCorrection :: Vec3 -> Vec3
-gammaCorrection vec =
-  vmap sqrt vec
+gammaCorrection = sqrt
 
 colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
 colorForPixel nx ny x y camera world =
@@ -81,12 +80,12 @@ subPixelXs :: [Float]
 subPixelXs = [0, 0.1 .. 1]
 
 subPixelYs :: [Float]
-subPixelYs = [0, 0.05 .. 1]
+subPixelYs = [0, 0.2 .. 1]
 
 main :: IO ()
 main = do
   let nx = 200
-      ny = 200
-      camera = Worlds.cornellBoxCamera nx ny
-  world <- Worlds.cornellBoxWorld
+      ny = 100
+      camera = Worlds.triangleCamera nx ny
+  world <- Worlds.triangleWorld
   writeImage nx ny camera world

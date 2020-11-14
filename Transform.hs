@@ -23,9 +23,9 @@ rotateY angle hitable =
       ijk = [(i, j, k) | i <- [0, 1], j <- [0, 1], k <- [0, 1]]
       folder :: (Vec3, Vec3) -> (Float, Float, Float) -> (Vec3, Vec3)
       folder (accMin, accMax) (i, j, k) =
-        let x = i * (getX . maxVec $ bbox) + (1 - i) * (getX . minVec $ bbox)
-            y = j * (getY . maxVec $ bbox) + (1 - j) * (getY . minVec $ bbox)
-            z = k * (getZ . maxVec $ bbox) + (1 - k) * (getZ . minVec $ bbox)
+        let x = i * (getX . maxVec) bbox + (1 - i) * (getX . minVec) bbox
+            y = j * (getY . maxVec) bbox + (1 - j) * (getY . minVec) bbox
+            z = k * (getZ . maxVec) bbox + (1 - k) * (getZ . minVec) bbox
             newX = cosTheta * x + sinTheta * z
             newZ = (- sinTheta) * x + cosTheta * z
             testerVec = Vec3 newX y newZ
