@@ -208,7 +208,7 @@ triangleWorld = do
   return $
     [ SomeHitable $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 1)),
       --
-      SomeHitable $ XYTriangle (-2, 1) (0, 3) (2, 1) (-1) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
+      SomeHitable $ XYTriangle (-1, 1) (0, 3) (1, 1) (-1.5) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       -- Balls
       SomeHitable $ Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian $ ConstantTexture (rgb 255 30 30)), -- red
       SomeHitable $ Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (ConstantTexture (rgb 94 45 138)) 0.4), -- purple

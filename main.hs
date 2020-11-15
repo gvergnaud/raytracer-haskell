@@ -84,7 +84,7 @@ subPixelYs = [0, 0.2 .. 1]
 
 main :: IO ()
 main = do
-  let nx = 200
+  let nx = 150
       ny = 100
       camera = Worlds.triangleCamera nx ny
   world <- Worlds.triangleWorld

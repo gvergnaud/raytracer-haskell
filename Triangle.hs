@@ -6,6 +6,7 @@ import AABB
 import Control.Monad (guard)
 import Hitable
 import Material
+import Math
 import Ray
 import Vec3
 
@@ -18,15 +19,18 @@ instance Hitable Triangle where
       (Vec3 (x0 `min` x1 `min` x2) (y0 `min` y1 `min` y2) (k - 0.001))
       (Vec3 (x0 `max` x1 `max` x2) (y0 `max` y1 `max` y2) (k + 0.001))
 
-  hit ray range (XYTriangle p1 p2 p3 k material) = do
+  hit ray (t0, t1) (XYTriangle p1 p2 p3 k material) = do
     {-
      - trouver le point P d'intersection avec le plan:
         origin.z + t * direction.z = k
          <=> t = (k - origin.z) / direction.z
     -}
     let t = (k - (getZ . origin) ray) / (getZ . direction) ray
-        x = (getX . origin) ray + t * (getX . direction) ray
-        y = (getX . origin) ray + t * (getX . direction) ray
+
+    guard $ isBetween t0 t1 t
+
+    let x = (getX . origin) ray + t * (getX . direction) ray
+        y = (getY . origin) ray + t * (getY . direction) ray
         z = k
         intersectionPoint = Vec3 x y z
     -------------
