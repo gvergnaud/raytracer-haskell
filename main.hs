@@ -62,6 +62,15 @@ vecToColorStr (Vec3 r g b) =
   intercalate " " $
     show <$> clamp 0 255 <$> floor <$> (* 255.99) <$> [r, g, b]
 
+{-
+This is an interesting use case for the extra modularity lazy
+languages brings. It looks like pixels computation are all defined
+here as a List of IO string, but actually since Lists are lazy,
+only the "iterable" procedure is created here, and pixels will
+be evaluated as we iterate over the list. We don't need to deal
+with this complexity in our code to make our program a stream
+of IOs which only has a single pixel in memory at the time.
+-}
 pixels :: Hitable a => Float -> Float -> Camera -> a -> [IO String]
 pixels nx ny camera world = do
   y <- reverse [0 .. ny]
@@ -72,6 +81,9 @@ writeImage :: Hitable a => Float -> Float -> Camera -> [a] -> IO ()
 writeImage nx ny camera world = do
   putStrLn $ "P3\n" ++ show (floor nx) ++ " " ++ show (floor ny) ++ "\n255"
   tree <- createTree initialTRange world
+  -- We use sequence_ because it discards the list values and the
+  -- can be garbage collected after each pixel has been written to
+  -- the disk.
   sequence_
     . fmap (>>= putStrLn)
     $ pixels nx ny camera tree
