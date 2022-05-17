@@ -1,9 +1,11 @@
 module Vec3 where
 
+import GHC.Records (HasField (..))
+
 data Vec3 = Vec3
-  { getX :: Float,
-    getY :: Float,
-    getZ :: Float
+  { x :: Float,
+    y :: Float,
+    z :: Float
   }
   deriving (Show, Eq)
 
@@ -24,21 +26,24 @@ instance Fractional Vec3 where
 
 instance Floating Vec3 where
   pi = vec3 pi
-  exp = vmap exp
-  log = vmap log
-  sin = vmap sin
-  cos = vmap cos
-  asin = vmap asin
-  acos = vmap acos
-  atan = vmap atan
-  sinh = vmap sinh
-  cosh = vmap cosh
-  asinh = vmap asinh
-  acosh = vmap acosh
-  atanh = vmap atanh
+  exp vec = vec.map exp
+  log vec = vec.map log
+  sin vec = vec.map sin
+  cos vec = vec.map cos
+  asin vec = vec.map asin
+  acos vec = vec.map acos
+  atan vec = vec.map atan
+  sinh vec = vec.map sinh
+  cosh vec = vec.map cosh
+  asinh vec = vec.map asinh
+  acosh vec = vec.map acosh
+  atanh vec = vec.map atanh
 
-vmap :: (Float -> Float) -> Vec3 -> Vec3
-vmap f (Vec3 x y z) = Vec3 (f x) (f y) (f z)
+instance HasField "map" Vec3 ((Float -> Float) -> Vec3) where
+  getField vec f = Vec3 (f vec.x) (f vec.y) (f vec.z)
+
+instance HasField "normalize" Vec3 Vec3 where
+  getField v = v / (vec3 $ vecLength v)
 
 vmin :: Vec3 -> Vec3 -> Vec3
 vmin (Vec3 x y z) (Vec3 x' y' z') =
@@ -55,8 +60,8 @@ vecLength :: Vec3 -> Float
 vecLength = sqrt . squaredLength
 
 -- dot product
-(•) :: Vec3 -> Vec3 -> Float
-(•) (Vec3 a b c) (Vec3 x y z) =
+dot :: Vec3 -> Vec3 -> Float
+Vec3 a b c `dot` Vec3 x y z =
   a * x + b * y + c * z
 
 cross :: Vec3 -> Vec3 -> Vec3
@@ -65,9 +70,6 @@ cross (Vec3 a b c) (Vec3 x y z) =
     (b * z - c * y)
     (c * x - a * z)
     (a * y - b * x)
-
-unitVector :: Vec3 -> Vec3
-unitVector v = v / (vec3 $ vecLength v)
 
 -- linear interpolation
 lerp :: Vec3 -> Vec3 -> Float -> Vec3

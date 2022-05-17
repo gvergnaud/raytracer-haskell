@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Material where
 
 import Random
@@ -22,19 +20,20 @@ data ScatterRecord = ScatterRecord
 
 reflect :: Vec3 -> Vec3 -> Vec3
 reflect vec normal =
-  vec - vec3 (2 * (vec • normal)) * normal
+  vec - vec3 (2 * (vec `dot` normal)) * normal
 
 refract :: Vec3 -> Vec3 -> Float -> Maybe Vec3
 refract vec normal refractiveIndicesRatio =
-  let uv = unitVector vec
-      dt = uv • normal
+  let uv = vec.normalize
+      dt = uv `dot` normal
       discriminant = 1 - refractiveIndicesRatio ** 2 * (1 - dt ** 2)
    in if discriminant > 0
         then
-          Just $
-            vec3 refractiveIndicesRatio
-              * (uv - normal * vec3 dt) - normal
-              * (vec3 . sqrt) discriminant
+          Just
+            ( vec3 refractiveIndicesRatio
+                * (uv - normal * vec3 dt) - normal
+                * (vec3 . sqrt) discriminant
+            )
         else Nothing
 
 schlickReflectionProbability :: Float -> Float -> Float
@@ -49,11 +48,11 @@ scatter ray point normal (Lambertian tex) = do
   let target = point + normal + rand
       scattered = Ray point (target - point)
       attenuation = textureValue 0 0 point tex
-  return . Just $ ScatterRecord {scattered, attenuation}
+  return (Just (ScatterRecord {scattered, attenuation}))
 --
 scatter ray point normal (Metal {albedo, fuzz}) = do
   rand <- getRandomVecInUnitSphere
-  let reflected = reflect (unitVector . direction $ ray) (normal)
+  let reflected = reflect ray.direction.normalize normal
       scattered =
         Ray
           { origin = point,
@@ -61,38 +60,40 @@ scatter ray point normal (Metal {albedo, fuzz}) = do
           }
       attenuation = textureValue 0 0 point albedo
   return $
-    if (direction scattered) • normal > 0
-      then Just $ ScatterRecord {scattered, attenuation}
+    if scattered.direction `dot` normal > 0
+      then Just (ScatterRecord {scattered, attenuation})
       else Nothing
 --
 scatter (Ray {direction}) point normal (Dielectric {refractiveIdx}) = do
   rand <- randomIO :: IO Float
   let (outwardNormal, refRatio, cosine) =
-        if (direction • normal > 0)
+        if (direction `dot` normal > 0)
           then
-            ( - normal,
+            ( -normal,
               refractiveIdx,
-              refractiveIdx * (direction • normal) / vecLength direction
+              refractiveIdx * (direction `dot` normal) / vecLength direction
             )
           else
             ( normal,
               1 / refractiveIdx,
-              - (direction • normal) / vecLength direction
+              -(direction `dot` normal) / vecLength direction
             )
       reflectionProbability = schlickReflectionProbability cosine refractiveIdx
-  return . Just $
-    case refract direction outwardNormal refRatio of
-      Just refracted
-        | rand > reflectionProbability ->
-          ScatterRecord
-            { scattered = Ray point refracted,
-              attenuation = Vec3 1 1 1
-            }
-      _ ->
-        ScatterRecord
-          { scattered = Ray point (reflect direction normal),
-            attenuation = Vec3 1 1 1
-          }
+  return $
+    Just
+      ( case refract direction outwardNormal refRatio of
+          Just refracted
+            | rand > reflectionProbability ->
+                ScatterRecord
+                  { scattered = Ray point refracted,
+                    attenuation = Vec3 1 1 1
+                  }
+          _ ->
+            ScatterRecord
+              { scattered = Ray point (reflect direction normal),
+                attenuation = Vec3 1 1 1
+              }
+      )
 --
 scatter ray point normal (DiffuseLight _) =
   return Nothing

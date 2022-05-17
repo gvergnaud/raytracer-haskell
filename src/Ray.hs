@@ -8,4 +8,5 @@ data Ray = Ray
   }
 
 pointAtParameter :: Float -> Ray -> Vec3
-pointAtParameter t (Ray origin direction) = origin + vec3 t * direction
+pointAtParameter t ray =
+  ray.origin + vec3 t * ray.direction

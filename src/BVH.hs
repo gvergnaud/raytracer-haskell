@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module BVH where
 
 import AABB
@@ -48,22 +46,22 @@ createTree range (x : y : []) =
    in return $ Node aabb (Leaf x) (Leaf y)
 createTree range list
   | length list > 2 = do
-    rand <- randomRIO (0, 2) :: IO Int
-    let getVecPart = case (rand) of
-          0 -> getX
-          1 -> getY
-          2 -> getZ
+      rand <- randomRIO (0, 2) :: IO Int
+      let getVecPart = case (rand) of
+            0 -> (.x)
+            1 -> (.y)
+            2 -> (.z)
 
-        (left, right) =
-          splitAt (length list `div` 2) . sortBy sorter $ list
-          where
-            sorter a b =
-              if getVecPart (minVec (boundingBox range a)) < getVecPart (minVec (boundingBox range b))
-                then GT
-                else LT
+          (left, right) =
+            splitAt (length list `div` 2) . sortBy sorter $ list
+            where
+              sorter a b =
+                if getVecPart (boundingBox range a).minVec < getVecPart (boundingBox range b).minVec
+                  then GT
+                  else LT
 
-        aabb = suroundingBox (boundingBox range left) (boundingBox range right)
+          aabb = suroundingBox (boundingBox range left) (boundingBox range right)
 
-    leftTree <- createTree range left
-    rightTree <- createTree range right
-    return $ Node aabb leftTree rightTree
+      leftTree <- createTree range left
+      rightTree <- createTree range right
+      return $ Node aabb leftTree rightTree

@@ -1,6 +1,7 @@
 module Worlds where
 
 import Camera
+import Control ((|>))
 import Hitable
 import Material
 import Random
@@ -15,7 +16,7 @@ import Vec3
 blueSky :: Vec3
 blueSky = Vec3 0.5 0.7 1
 
-rgb x y z = vmap (/ 255) (Vec3 x y z)
+rgb x y z = (Vec3 x y z).map (/ 255)
 
 white :: Vec3
 white = vec3 1
@@ -68,13 +69,13 @@ tutoWorld = do
           case randMat of
             _
               | randMat < 0.8 -> do
-                rgb <- getRandomItem sphereColors
-                return . Just $ Sphere center 0.2 (Lambertian $ ConstantTexture rgb)
+                  rgb <- getRandomItem sphereColors
+                  return . Just $ Sphere center 0.2 (Lambertian $ ConstantTexture rgb)
             _
               | randMat < 0.95 -> do
-                randVec <- getRandomItem sphereColors
-                metalness <- randomIO :: IO Float
-                return . Just $ Sphere center 0.2 (Metal (ConstantTexture $ vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
+                  randVec <- getRandomItem sphereColors
+                  metalness <- randomIO :: IO Float
+                  return . Just $ Sphere center 0.2 (Metal (ConstantTexture $ vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
             _ -> do
               return . Just $ Sphere center 0.2 (Dielectric 1.5)
 
@@ -137,14 +138,14 @@ pandaWorld = do
   return $
     [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
       -- offscreen ball
-      Sphere (Vec3 4 1.5 (3)) 2.5 (Lambertian $ ConstantTexture $ vec3 0.5),
+      Sphere (Vec3 4 1.5 (3)) 2.5 (Lambertian (ConstantTexture (vec3 0.5))),
       -- body
       Sphere (Vec3 0 0.3 (-1)) 1.5 (Metal (ConstantTexture black) 0.1),
       -- head
-      Sphere (Vec3 0 2 (-0.3)) 0.9 (Lambertian $ ConstantTexture white),
+      Sphere (Vec3 0 2 (-0.3)) 0.9 (Lambertian (ConstantTexture white)),
       -- shoulders
-      Sphere (Vec3 (-1.05) 0.6 (-0.3)) 0.5 (Lambertian $ ConstantTexture black),
-      Sphere (Vec3 1.05 0.6 (-0.3)) 0.5 (Lambertian $ ConstantTexture black)
+      Sphere (Vec3 (-1.05) 0.6 (-0.3)) 0.5 (Lambertian (ConstantTexture black)),
+      Sphere (Vec3 1.05 0.6 (-0.3)) 0.5 (Lambertian (ConstantTexture black))
     ]
       ++ ears
       ++ eyes (vec3 0)
@@ -177,20 +178,43 @@ lightCamera nx ny =
 
 cornellBoxWorld :: IO [SomeHitable]
 cornellBoxWorld = do
-  let red = Lambertian $ ConstantTexture $ Vec3 0.65 0.05 0.05
-      white = Lambertian $ ConstantTexture $ vec3 0.73
-      green = Lambertian $ ConstantTexture $ Vec3 0.12 0.45 0.15
-      light = DiffuseLight $ ConstantTexture $ vec3 15
+  let red = Lambertian (ConstantTexture (Vec3 0.65 0.05 0.05))
+      white = Lambertian (ConstantTexture (vec3 0.73))
+      green = Lambertian (ConstantTexture (Vec3 0.12 0.45 0.15))
+      light = DiffuseLight (ConstantTexture (vec3 15))
   return $
-    [ SomeHitable $ flipNormal $ YZRectangle (0, 555) (0, 555) 555 green,
-      SomeHitable $ YZRectangle (0, 555) (0, 555) 0 red,
-      SomeHitable $ XZRectangle (213, 343) (227, 332) 554 light,
-      SomeHitable $ flipNormal $ XZRectangle (0, 555) (0, 555) 555 white,
-      SomeHitable $ XZRectangle (0, 555) (0, 555) 0 white,
-      SomeHitable $ flipNormal $ XYRectangle (0, 555) (0, 555) 555 white,
-      SomeHitable $ translate (Vec3 130 0 65) $ rotateY (-18) $ createBox (Vec3 0 0 0) (Vec3 165 165 165) white,
-      SomeHitable $ translate (Vec3 195 165 65) $ Sphere (Vec3 0 50 0) 50 (Dielectric 1.5),
-      SomeHitable $ translate (Vec3 265 0 295) $ rotateY (15) $ createBox (Vec3 0 0 0) (Vec3 165 330 165) white
+    [ SomeHitable
+        ( YZRectangle (0, 555) (0, 555) 555 green
+            |> flipNormal
+        ),
+      SomeHitable
+        (YZRectangle (0, 555) (0, 555) 0 red),
+      SomeHitable
+        (XZRectangle (213, 343) (227, 332) 554 light),
+      SomeHitable
+        ( XZRectangle (0, 555) (0, 555) 555 white
+            |> flipNormal
+        ),
+      SomeHitable
+        (XZRectangle (0, 555) (0, 555) 0 white),
+      SomeHitable
+        ( XYRectangle (0, 555) (0, 555) 555 white
+            |> flipNormal
+        ),
+      SomeHitable
+        ( createBox (Vec3 0 0 0) (Vec3 165 165 165) white
+            |> rotateY (-18)
+            |> translate (Vec3 130 0 65)
+        ),
+      SomeHitable
+        ( Sphere (Vec3 0 50 0) 50 (Dielectric 1.5)
+            |> translate (Vec3 195 165 65)
+        ),
+      SomeHitable
+        ( createBox (Vec3 0 0 0) (Vec3 165 330 165) white
+            |> rotateY (15)
+            |> translate (Vec3 265 0 295)
+        )
     ]
 
 cornellBoxCamera :: Float -> Float -> Camera

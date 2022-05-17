@@ -1,7 +1,3 @@
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Hitable where
 
 import AABB
@@ -40,6 +36,6 @@ instance Hitable a => Hitable [a] where
         case acc of
           Nothing -> hit ray range item
           Just hitRecord ->
-            case hit ray (tMin, (t hitRecord)) item of
+            case hit ray (tMin, hitRecord.t) item of
               Just closest -> Just closest
               Nothing -> Just hitRecord

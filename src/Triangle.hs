@@ -25,12 +25,12 @@ instance Hitable Triangle where
         origin.z + t * direction.z = k
          <=> t = (k - origin.z) / direction.z
     -}
-    let t = (k - (getZ . origin) ray) / (getZ . direction) ray
+    let t = (k - ray.origin.z) / ray.direction.z
 
     guard $ isBetween t0 t1 t
 
-    let x = (getX . origin) ray + t * (getX . direction) ray
-        y = (getY . origin) ray + t * (getY . direction) ray
+    let x = ray.origin.x + t * ray.direction.x
+        y = ray.origin.y + t * ray.direction.y
         z = k
         intersectionPoint = Vec3 x y z
     -------------

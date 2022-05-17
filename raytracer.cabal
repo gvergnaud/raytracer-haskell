@@ -1,0 +1,48 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           raytracer
+version:        0.0.0
+build-type:     Simple
+
+executable raytracer
+  main-is: Main.hs
+  other-modules:
+      AABB
+      BVH
+      Camera
+      Control
+      Hitable
+      Material
+      Math
+      Noise
+      Random
+      Ray
+      Rectangle
+      Sphere
+      Texture
+      Transform
+      Triangle
+      Vec3
+      Worlds
+      Paths_raytracer
+  hs-source-dirs:
+      src
+  default-extensions:
+      NamedFieldPuns
+      GADTs
+      KindSignatures
+      DataKinds
+      OverloadedRecordDot
+      NoFieldSelectors
+      ImportQualifiedPost
+  ghc-options: -threaded -with-rtsopts=-N4
+  build-depends:
+      base
+    , parallel-io
+    , random
+    , split
+  default-language: Haskell2010

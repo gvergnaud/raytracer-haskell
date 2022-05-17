@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module AABB where
 
 import Ray
@@ -30,9 +28,9 @@ overlap (min1, max1) (min2, max2) =
 
 hitAABB :: Ray -> AABB -> Bool
 hitAABB ray@(Ray {origin, direction}) (AABB (Vec3 x y z) (Vec3 x' y' z')) =
-  let xsInterval = interval (getX origin) (getX direction) x x'
-      ysInterval = interval (getY origin) (getY direction) y y'
-      zsInterval = interval (getZ origin) (getZ direction) z z'
+  let xsInterval = interval origin.x direction.x x x'
+      ysInterval = interval origin.y direction.y y y'
+      zsInterval = interval origin.z direction.z z z'
       hitInterval = overlap xsInterval =<< overlap ysInterval zsInterval
    in case hitInterval of
         Just interval -> True
@@ -41,5 +39,6 @@ hitAABB ray@(Ray {origin, direction}) (AABB (Vec3 x y z) (Vec3 x' y' z')) =
 suroundingBox :: AABB -> AABB -> AABB
 suroundingBox (AABB min max) (AABB min' max') =
   AABB
-    (vmin min min')
-    (vmax max max')
+    { minVec = (min `vmin` min'),
+      maxVec = (max `vmax` max')
+    }

@@ -23,13 +23,13 @@ rotateY angle hitable =
       ijk = [(i, j, k) | i <- [0, 1], j <- [0, 1], k <- [0, 1]]
       folder :: (Vec3, Vec3) -> (Float, Float, Float) -> (Vec3, Vec3)
       folder (accMin, accMax) (i, j, k) =
-        let x = i * (getX . maxVec) bbox + (1 - i) * (getX . minVec) bbox
-            y = j * (getY . maxVec) bbox + (1 - j) * (getY . minVec) bbox
-            z = k * (getZ . maxVec) bbox + (1 - k) * (getZ . minVec) bbox
+        let x = i * bbox.maxVec.x + (1 - i) * bbox.minVec.x
+            y = j * bbox.maxVec.y + (1 - j) * bbox.minVec.y
+            z = k * bbox.maxVec.z + (1 - k) * bbox.minVec.z
             newX = cosTheta * x + sinTheta * z
-            newZ = (- sinTheta) * x + cosTheta * z
+            newZ = (-sinTheta) * x + cosTheta * z
             testerVec = Vec3 newX y newZ
-         in (vmin accMin testerVec, vmax accMax testerVec)
+         in (accMin `vmin` testerVec, accMax `vmax` testerVec)
       (aabbMin, aabbMax) = foldl folder (vec3 1000000000000, vec3 (-1000000000000)) ijk
    in RotateY
         { aabb = AABB aabbMin aabbMax,
@@ -46,7 +46,7 @@ instance Hitable a => Hitable (FlipNormal a) where
 
   hit ray range (FlipNormal hitable) = do
     (HitRecord {t, u, v, point, normal, material}) <- hit ray range hitable
-    return $ HitRecord {normal = - normal, t, u, v, point, material}
+    return $ HitRecord {normal = -normal, t, u, v, point, material}
 
 data Translate a = Translate Vec3 a
 
@@ -61,11 +61,11 @@ instance Hitable a => Hitable (Translate a) where
     Just $
       HitRecord
         { point = point + offset,
-          u = u record,
-          v = v record,
-          t = t record,
-          material = material record,
-          normal = normal record
+          u = record.u,
+          v = record.v,
+          t = record.t,
+          material = record.material,
+          normal = record.normal
         }
 
 data Rotate a = RotateY
@@ -86,14 +86,14 @@ instance Hitable a => Hitable (Rotate a) where
     --     (sinTheta, cosTheta))
     let rotateY' vec =
           Vec3
-            (cosTheta * (getX vec) - sinTheta * (getZ vec))
-            (getY vec)
-            (sinTheta * (getX vec) + cosTheta * (getZ vec))
+            (cosTheta * vec.x - sinTheta * vec.z)
+            vec.y
+            (sinTheta * vec.x + cosTheta * vec.z)
         invRotateY' vec =
           Vec3
-            (cosTheta * (getX vec) + sinTheta * (getZ vec))
-            (getY vec)
-            (- sinTheta * (getX vec) + cosTheta * (getZ vec))
+            (cosTheta * vec.x + sinTheta * vec.z)
+            vec.y
+            (-sinTheta * vec.x + cosTheta * vec.z)
 
         rotatedRay = Ray (rotateY' origin) (rotateY' direction)
 

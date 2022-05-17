@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Rectangle where
 
 import AABB
@@ -86,11 +84,11 @@ instance Hitable Rectangle where
 
   -- hit :: Ray -> (Float, Float) ->  Rectangle -> Maybe HitRecord
   hit ray range (XYRectangle xRange yRange z material) =
-    hitRectangle ray range (xRange, yRange, z) (getX, getY, getZ) material (Vec3 0 0 1)
+    hitRectangle ray range (xRange, yRange, z) ((.x), (.y), (.z)) material (Vec3 0 0 1)
   hit ray range (XZRectangle xRange zRange y material) =
-    hitRectangle ray range (xRange, zRange, y) (getX, getZ, getY) material (Vec3 0 1 0)
+    hitRectangle ray range (xRange, zRange, y) ((.x), (.z), (.y)) material (Vec3 0 1 0)
   hit ray range (YZRectangle yRange zRange x material) =
-    hitRectangle ray range (yRange, zRange, x) (getY, getZ, getX) material (Vec3 1 0 0)
+    hitRectangle ray range (yRange, zRange, x) ((.y), (.z), (.x)) material (Vec3 1 0 0)
 
 data Box = Box {pmin :: Vec3, pmax :: Vec3, hitable :: [SomeHitable]}
 
@@ -100,12 +98,12 @@ createBox pmin@(Vec3 xmin ymin zmin) pmax@(Vec3 xmax ymax zmax) material =
       yRange = (ymin, ymax)
       zRange = (zmin, zmax)
       hitable =
-        [ SomeHitable $ XYRectangle xRange yRange zmax material,
-          SomeHitable $ flipNormal $ XYRectangle xRange yRange zmin material,
-          SomeHitable $ XZRectangle xRange zRange ymax material,
-          SomeHitable $ flipNormal $ XZRectangle xRange zRange ymin material,
-          SomeHitable $ YZRectangle yRange zRange xmax material,
-          SomeHitable $ flipNormal $ YZRectangle yRange zRange xmin material
+        [ SomeHitable (XYRectangle xRange yRange zmax material),
+          SomeHitable (flipNormal (XYRectangle xRange yRange zmin material)),
+          SomeHitable (XZRectangle xRange zRange ymax material),
+          SomeHitable (flipNormal (XZRectangle xRange zRange ymin material)),
+          SomeHitable (YZRectangle yRange zRange xmax material),
+          SomeHitable (flipNormal (YZRectangle yRange zRange xmin material))
         ]
    in Box {pmin, pmax, hitable}
 

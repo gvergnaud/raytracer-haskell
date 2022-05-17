@@ -1,0 +1,25 @@
+name: raytracer
+
+default-language: GHC2021
+
+default-extensions:
+  - NamedFieldPuns
+  - GADTs
+  - KindSignatures
+  - DataKinds
+  - OverloadedRecordDot
+  - NoFieldSelectors
+  - ImportQualifiedPost
+
+executables:
+  raytracer:
+    main: Main.hs
+    source-dirs: src
+    ghc-options:
+     - -threaded
+     - -with-rtsopts=-N4
+    dependencies: 
+      - "base"
+      - "random"
+      - "split"
+      - "parallel-io"

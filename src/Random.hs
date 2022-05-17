@@ -25,7 +25,7 @@ getRandomInUnitDisk = do
   x <- randomIO :: IO Float
   y <- randomIO :: IO Float
   let p = vec3 2 * (Vec3 x y 0) - (Vec3 1 1 0)
-  if (p • p < 1)
+  if (p `dot` p < 1)
     then return p
     else getRandomInUnitDisk
 

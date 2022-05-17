@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Camera where
 
 import Random (getRandomInUnitDisk)
@@ -23,8 +21,8 @@ newCamera lookFrom lookAt vup fov aspect aperture focusDistance =
       theta = fov * pi / 180
       halfHeight = tan $ theta / 2
       halfWidth = aspect * halfHeight
-      w = unitVector $ lookFrom - lookAt
-      u = unitVector $ vup `cross` w
+      w = (lookFrom - lookAt).normalize
+      u = (vup `cross` w).normalize
       v = w `cross` u
    in Camera
         { Camera.origin = lookFrom,
@@ -41,7 +39,7 @@ getRay :: Float -> Float -> Camera -> IO Ray
 getRay s t (Camera {Camera.origin, lowerLeftCorner, horizontal, vertical, lensRadius, cameraU = u, cameraV = v}) = do
   rand <- getRandomInUnitDisk
   let randDisc = vec3 lensRadius * rand
-      offset = u * vec3 (getX randDisc) + v * vec3 (getY randDisc)
+      offset = u * vec3 randDisc.x + v * vec3 randDisc.y
       rayOrigin = origin + offset
       direction = lowerLeftCorner + (vec3 s * horizontal) + (vec3 t * vertical) - origin - offset
   return $ Ray rayOrigin direction

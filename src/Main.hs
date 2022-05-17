@@ -1,26 +1,23 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Main (main) where
 
 import BVH
 import Camera
 import Control.Concurrent.ParallelIO.Global (parallel)
 import Data.List (genericLength, intercalate)
-import GHC.Float (int2Float)
 import Hitable
 import Material
 import Math
 import Ray
 import Vec3
-import qualified Worlds
+import Worlds qualified
 
 initialTRange :: (Float, Float)
 initialTRange = (0.001, 1000000)
 
 skyColor :: Vec3 -> Vec3
 skyColor direction =
-  let unitDirection = unitVector direction
-      t = 0.5 * getY unitDirection + 1
+  let unitDirection = direction.normalize
+      t = 0.5 * unitDirection.y + 1
    in lerp Worlds.white Worlds.blueSky t
 
 rayColor :: Hitable a => Ray -> a -> IO Vec3
@@ -33,8 +30,8 @@ rayColor ray hitable =
             case maybeRec of
               Just (ScatterRecord {scattered, attenuation})
                 | depth < 50 -> do
-                  c <- colorRec scattered hitable (depth + 1)
-                  return $ emitted + c * attenuation
+                    c <- colorRec scattered hitable (depth + 1)
+                    return $ emitted + c * attenuation
               _ -> return $ emitted
           Nothing ->
             return $ skyColor direction
@@ -96,8 +93,8 @@ subPixelYs = [0, 0.2 .. 1]
 
 main :: IO ()
 main = do
-  let nx = 150
-      ny = 100
+  let nx = 75
+      ny = 50
       camera = Worlds.triangleCamera nx ny
   world <- Worlds.triangleWorld
   writeImage nx ny camera world

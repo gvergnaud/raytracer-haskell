@@ -6,3 +6,4 @@ isBetween min max value = value > min && value < max
 clamp :: Ord a => a -> a -> a -> a
 clamp vmin vmax value =
   min (max vmin value) vmax
+  

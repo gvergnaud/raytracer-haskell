@@ -1,6 +1,6 @@
 module Noise (noise3D) where
 
-import Vec3
+import Vec3 (Vec3 (Vec3))
 
 gradients3d =
   [[1, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, -1, 0], [1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1], [0, 1, 1], [0, -1, 1], [0, 1, -1], [0, -1, -1]]
@@ -10,7 +10,7 @@ perm = [151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 1
 simplex =
   [[0, 1, 2, 3], [0, 1, 3, 2], [0, 0, 0, 0], [0, 2, 3, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [1, 2, 3, 0], [0, 2, 1, 3], [0, 0, 0, 0], [0, 3, 1, 2], [0, 3, 2, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [1, 3, 2, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [1, 2, 0, 3], [0, 0, 0, 0], [1, 3, 0, 2], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 3, 0, 1], [2, 3, 1, 0], [1, 0, 2, 3], [1, 0, 3, 2], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 3, 1], [0, 0, 0, 0], [2, 1, 3, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 1, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [3, 0, 1, 2], [3, 0, 2, 1], [0, 0, 0, 0], [3, 1, 2, 0], [2, 1, 0, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [3, 1, 0, 2], [0, 0, 0, 0], [3, 2, 0, 1], [3, 2, 1, 0]]
 
---N-ary dot product operation
+-- N-ary dot product operation
 dot :: (Num a) => [a] -> [a] -> a
 dot xs ys
   | length xs == length ys = sum (zipWith (*) xs ys)
@@ -18,7 +18,7 @@ dot xs ys
 
 noise3D :: Vec3 -> Float
 noise3D (Vec3 x y z) =
-  --space skewing-factors
+  -- space skewing-factors
   let f3 = 1 / 3
       s = (x + y + z) * f3
       i = floor (x + s)
@@ -28,12 +28,12 @@ noise3D (Vec3 x y z) =
       g3 = 1 / 6
       t = fromIntegral (i + j + k) * g3
 
-      --cell origin coordinates
+      -- cell origin coordinates
       x0 = (x - (fromIntegral i - t))
       y0 = (y - (fromIntegral j - t))
       z0 = (z - (fromIntegral k - t))
 
-      --ordering of other coordinates
+      -- ordering of other coordinates
       (i1, j1, k1, i2, j2, k2) =
         if (x0 >= y0)
           then
@@ -54,7 +54,7 @@ noise3D (Vec3 x y z) =
                   )
             )
 
-      --coordinates of the other 3 vertices
+      -- coordinates of the other 3 vertices
       x1 = x0 - fromIntegral i1 + g3
       y1 = y0 - fromIntegral j1 + g3
       z1 = z0 - fromIntegral k1 + g3
@@ -67,7 +67,7 @@ noise3D (Vec3 x y z) =
       y3 = y0 - 1 + 3 * g3
       z3 = z0 - 1 + 3 * g3
 
-      --locate gradient
+      -- locate gradient
       ii = i `mod` 256
       jj = j `mod` 256
       kk = k `mod` 256
@@ -77,15 +77,15 @@ noise3D (Vec3 x y z) =
       gi2 = (perm !! (ii + i2 + (perm !! (jj + j2 + (perm !! (kk + k2)))))) `mod` 12
       gi3 = (perm !! (ii + 1 + (perm !! (jj + 1 + (perm !! (kk + 1)))))) `mod` 12
 
-      --contributions from each corner
+      -- contributions from each corner
       t0 = 0.5 - x0 * x0 - y0 * y0 - z0 * z0
       t1 = 0.5 - x1 * x1 - y1 * y1 - z1 * z1
       t2 = 0.5 - x2 * x2 - y2 * y2 - z2 * z2
       t3 = 0.5 - x3 * x3 - y3 * y3 - z3 * z3
 
-      n0 = if (t0 < 0) then 0 else (t0 ** 4) * (gradients3d !! gi0 `dot` [x0, y0, z0])
-      n1 = if (t1 < 0) then 0 else (t1 ** 4) * (gradients3d !! gi1 `dot` [x1, y1, z1])
-      n2 = if (t2 < 0) then 0 else (t2 ** 4) * (gradients3d !! gi2 `dot` [x2, y2, z2])
-      n3 = if (t3 < 0) then 0 else (t3 ** 4) * (gradients3d !! gi3 `dot` [x3, y3, z3])
-   in --sum the contributions
+      n0 = if (t0 < 0) then 0 else (t0 ** 4) * (gradients3d !! gi0 `Noise.dot` [x0, y0, z0])
+      n1 = if (t1 < 0) then 0 else (t1 ** 4) * (gradients3d !! gi1 `Noise.dot` [x1, y1, z1])
+      n2 = if (t2 < 0) then 0 else (t2 ** 4) * (gradients3d !! gi2 `Noise.dot` [x2, y2, z2])
+      n3 = if (t3 < 0) then 0 else (t3 ** 4) * (gradients3d !! gi3 `Noise.dot` [x3, y3, z3])
+   in -- sum the contributions
       32 * (n0 + n1 + n2 + n3)
