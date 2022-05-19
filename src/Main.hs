@@ -1,15 +1,22 @@
 module Main (main) where
 
-import BVH
-import Camera
+import BVH (createTree)
+import Camera (Camera)
+import Control ((|>))
 import Control.Concurrent.ParallelIO.Global (parallel)
 import Data.List (genericLength, intercalate)
 import GHC.Records (HasField (getField))
 import Hitable
+  ( HitRecord (HitRecord, material, normal, point, u, v),
+    Hitable (hit),
+  )
 import Material
-import Math
-import Ray
-import Vec3
+  ( ScatterRecord (ScatterRecord, attenuation, scattered),
+  )
+import Math (clamp)
+import Ray (Ray (direction))
+import Text.Printf (printf)
+import Vec3 (Vec3 (..), lerp)
 import Worlds qualified
 
 initialTRange :: (Float, Float)
@@ -25,7 +32,7 @@ rayColor :: Hitable a => Ray -> a -> IO Vec3
 rayColor ray hitable =
   getColor ray hitable 0
   where
-    getColor ray@(Ray {direction}) hitable depth =
+    getColor ray hitable depth =
       case hit ray initialTRange hitable of
         Just (HitRecord {u, v, point, normal, material}) -> do
           maybeRec <- material.scatter ray point normal
@@ -37,7 +44,7 @@ rayColor ray hitable =
                   return $ emitted + c * attenuation
             _ -> return $ emitted
         Nothing ->
-          return $ skyColor direction
+          return $ skyColor ray.direction
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
@@ -58,8 +65,9 @@ colorForPixel width height x y camera world =
 
 vecToColorStr :: Vec3 -> String
 vecToColorStr (Vec3 r g b) =
-  intercalate " " $
-    show <$> clamp 0 255 <$> floor <$> (* 255.99) <$> [r, g, b]
+  [r, g, b]
+    |> fmap (show . clamp 0 255 . floor . (* 255.99))
+    |> intercalate " "
 
 {-
 This is an interesting use case for the extra modularity lazy
@@ -78,17 +86,17 @@ pixels width height camera world = do
 
 writeImage :: Hitable a => Float -> Float -> Camera -> [a] -> IO ()
 writeImage width height camera world = do
-  putStrLn $ "P3\n" ++ show (floor width) ++ " " ++ show (floor height) ++ "\n255"
+  printf "P3\n%d %d\n255\n" (floor width :: Int) (floor height :: Int)
   tree <- createTree initialTRange world
   -- We use sequence_ because it discards the list values and the
   -- can be garbage collected after each pixel has been written to
   -- the disk.
-  sequence_
-    . fmap (>>= putStrLn)
-    $ pixels width height camera tree
+  pixels width height camera tree
+    |> fmap (>>= putStrLn)
+    |> sequence_
 
 subPixelXs :: [Float]
-subPixelXs = [0, 0.1 .. 1]
+subPixelXs = [0, 0.2 .. 1]
 
 subPixelYs :: [Float]
 subPixelYs = [0, 0.2 .. 1]
