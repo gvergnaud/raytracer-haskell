@@ -1,16 +1,17 @@
 module Material where
 
+import GHC.Records (HasField (..))
 import Random
 import Ray
 import System.Random (randomIO)
 import Texture
-import Vec3
+import Vec3 (Vec3 (Vec3), dot, vec3)
 
 data Material
-  = Lambertian Texture
+  = Lambertian {texture :: Texture}
   | Metal {albedo :: Texture, fuzz :: Float}
   | Dielectric {refractiveIdx :: Float}
-  | DiffuseLight Texture
+  | DiffuseLight {texture :: Texture}
   deriving (Show)
 
 data ScatterRecord = ScatterRecord
@@ -43,11 +44,11 @@ schlickReflectionProbability cosine refractiveIdx =
     r0 = ((1 - refractiveIdx) / (1 + refractiveIdx)) ** 2
 
 scatter :: Ray -> Vec3 -> Vec3 -> Material -> IO (Maybe ScatterRecord)
-scatter ray point normal (Lambertian tex) = do
+scatter ray point normal (Lambertian {texture}) = do
   rand <- getRandomVecInUnitSphere
   let target = point + normal + rand
       scattered = Ray point (target - point)
-      attenuation = textureValue 0 0 point tex
+      attenuation = textureValue 0 0 point texture
   return (Just (ScatterRecord {scattered, attenuation}))
 --
 scatter ray point normal (Metal {albedo, fuzz}) = do
@@ -71,12 +72,12 @@ scatter (Ray {direction}) point normal (Dielectric {refractiveIdx}) = do
           then
             ( -normal,
               refractiveIdx,
-              refractiveIdx * (direction `dot` normal) / vecLength direction
+              refractiveIdx * (direction `dot` normal) / direction.vecLength
             )
           else
             ( normal,
               1 / refractiveIdx,
-              -(direction `dot` normal) / vecLength direction
+              -(direction `dot` normal) / direction.vecLength
             )
       reflectionProbability = schlickReflectionProbability cosine refractiveIdx
   return $
@@ -99,7 +100,13 @@ scatter ray point normal (DiffuseLight _) =
   return Nothing
 
 emit :: Float -> Float -> Vec3 -> Material -> Vec3
-emit u v point (DiffuseLight texture) =
+emit u v point (DiffuseLight {texture}) =
   textureValue u v point texture
 emit u v point _ =
   vec3 0
+
+instance HasField "scatter" Material (Ray -> Vec3 -> Vec3 -> IO (Maybe ScatterRecord)) where
+  getField mat ray point normal = scatter ray point normal mat
+
+instance HasField "emit" Material (Float -> Float -> Vec3 -> Vec3) where
+  getField mat u v point = emit u v point mat

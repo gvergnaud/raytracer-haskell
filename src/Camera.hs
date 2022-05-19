@@ -1,5 +1,6 @@
 module Camera where
 
+import GHC.Records (HasField (getField))
 import Random (getRandomInUnitDisk)
 import Ray
 import Vec3
@@ -43,3 +44,6 @@ getRay s t (Camera {Camera.origin, lowerLeftCorner, horizontal, vertical, lensRa
       rayOrigin = origin + offset
       direction = lowerLeftCorner + (vec3 s * horizontal) + (vec3 t * vertical) - origin - offset
   return $ Ray rayOrigin direction
+
+instance HasField "getRay" Camera (Float -> Float -> IO Ray) where
+  getField cam s t = getRay s t cam

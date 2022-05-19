@@ -1,9 +1,11 @@
 module Hitable where
 
-import AABB
-import Material
-import Ray
-import Vec3
+import AABB (AABB, suroundingBox)
+import Control ((|>))
+import GHC.Records ()
+import Material (Material)
+import Ray (Ray)
+import Vec3 (Vec3)
 
 data HitRecord = HitRecord
   { t :: Float,
@@ -27,7 +29,9 @@ instance Hitable SomeHitable where
 
 instance Hitable a => Hitable [a] where
   boundingBox range (head : tail) =
-    foldl suroundingBox (boundingBox range head) . map (boundingBox range) $ tail
+    tail
+      |> map (boundingBox range)
+      |> foldl suroundingBox (boundingBox range head)
 
   hit ray range@(tMin, tMax) list =
     foldl pickClosestHit Nothing list

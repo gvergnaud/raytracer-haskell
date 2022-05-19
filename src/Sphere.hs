@@ -1,14 +1,15 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Sphere where
 
-import AABB
-import Control.Monad
+import AABB (AABB (AABB))
+import Control.Monad (guard)
 import Hitable
-import Material
-import Math
-import Ray
-import Vec3
+  ( HitRecord (HitRecord, material, normal, point, t, u, v),
+    Hitable (..),
+  )
+import Material (Material)
+import Math (isBetween)
+import Ray (Ray (Ray), pointAtParameter)
+import Vec3 (Vec3 (Vec3), dot, vec3)
 
 data Sphere = Sphere
   { sphereCenter :: Vec3,

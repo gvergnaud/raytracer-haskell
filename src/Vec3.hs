@@ -13,15 +13,15 @@ vec3 :: Float -> Vec3
 vec3 f = Vec3 f f f
 
 instance Num Vec3 where
-  (Vec3 a b c) + (Vec3 d e f) = Vec3 (a + d) (b + e) (c + f)
-  (Vec3 a b c) - (Vec3 d e f) = Vec3 (a - d) (b - e) (c - f)
-  (Vec3 a b c) * (Vec3 d e f) = Vec3 (a * d) (b * e) (c * f)
-  abs (Vec3 a b c) = Vec3 (abs a) (abs b) (abs c)
-  signum (Vec3 a b c) = Vec3 (signum a) (signum b) (signum c)
+  vec1 + vec2 = Vec3 (vec1.x + vec2.x) (vec1.y + vec2.y) (vec1.z + vec2.z)
+  vec1 - vec2 = Vec3 (vec1.x - vec2.x) (vec1.y - vec2.y) (vec1.z - vec2.z)
+  vec1 * vec2 = Vec3 (vec1.x * vec2.x) (vec1.y * vec2.y) (vec1.z * vec2.z)
+  abs (Vec3 x y z) = Vec3 (abs x) (abs y) (abs z)
+  signum (Vec3 x y z) = Vec3 (signum x) (signum y) (signum z)
   fromInteger i = Vec3 (fromInteger i) (fromInteger i) (fromInteger i)
 
 instance Fractional Vec3 where
-  (Vec3 a b c) / (Vec3 d e f) = Vec3 (a / d) (b / e) (c / f)
+  vec1 / vec2 = Vec3 (vec1.x / vec2.x) (vec1.y / vec2.y) (vec1.z / vec2.z)
   fromRational a = (Vec3 (fromRational a) (fromRational a) (fromRational a))
 
 instance Floating Vec3 where
@@ -45,6 +45,12 @@ instance HasField "map" Vec3 ((Float -> Float) -> Vec3) where
 instance HasField "normalize" Vec3 Vec3 where
   getField v = v / (vec3 $ vecLength v)
 
+instance HasField "vecLength" Vec3 Float where
+  getField = vecLength
+
+instance HasField "squaredLength" Vec3 Float where
+  getField = squaredLength
+
 vmin :: Vec3 -> Vec3 -> Vec3
 vmin (Vec3 x y z) (Vec3 x' y' z') =
   Vec3 (min x x') (min y y') (min z z')
@@ -61,15 +67,15 @@ vecLength = sqrt . squaredLength
 
 -- dot product
 dot :: Vec3 -> Vec3 -> Float
-Vec3 a b c `dot` Vec3 x y z =
-  a * x + b * y + c * z
+Vec3 x y z `dot` Vec3 x' y' z' =
+  x * x' + y * y' + z * z'
 
 cross :: Vec3 -> Vec3 -> Vec3
-cross (Vec3 a b c) (Vec3 x y z) =
+cross (Vec3 x y z) (Vec3 x' y' z') =
   Vec3
-    (b * z - c * y)
-    (c * x - a * z)
-    (a * y - b * x)
+    (y * z' - z * y')
+    (z * x' - x * z')
+    (x * y' - y * x')
 
 -- linear interpolation
 lerp :: Vec3 -> Vec3 -> Float -> Vec3

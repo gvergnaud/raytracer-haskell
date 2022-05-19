@@ -4,6 +4,7 @@ import BVH
 import Camera
 import Control.Concurrent.ParallelIO.Global (parallel)
 import Data.List (genericLength, intercalate)
+import GHC.Records (HasField (getField))
 import Hitable
 import Material
 import Math
@@ -22,20 +23,21 @@ skyColor direction =
 
 rayColor :: Hitable a => Ray -> a -> IO Vec3
 rayColor ray hitable =
-  let colorRec ray@(Ray {direction}) hitable depth =
-        case hit ray initialTRange hitable of
-          Just (HitRecord {u, v, point, normal, material}) -> do
-            maybeRec <- scatter ray point normal material
-            let emitted = emit u v point material
-            case maybeRec of
-              Just (ScatterRecord {scattered, attenuation})
-                | depth < 50 -> do
-                    c <- colorRec scattered hitable (depth + 1)
-                    return $ emitted + c * attenuation
-              _ -> return $ emitted
-          Nothing ->
-            return $ skyColor direction
-   in colorRec ray hitable 0
+  getColor ray hitable 0
+  where
+    getColor ray@(Ray {direction}) hitable depth =
+      case hit ray initialTRange hitable of
+        Just (HitRecord {u, v, point, normal, material}) -> do
+          maybeRec <- material.scatter ray point normal
+          let emitted = material.emit u v point
+          case maybeRec of
+            Just (ScatterRecord {scattered, attenuation})
+              | depth < 50 -> do
+                  c <- getColor scattered hitable (depth + 1)
+                  return $ emitted + c * attenuation
+            _ -> return $ emitted
+        Nothing ->
+          return $ skyColor direction
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
@@ -44,14 +46,14 @@ gammaCorrection :: Vec3 -> Vec3
 gammaCorrection = sqrt
 
 colorForPixel :: Hitable a => Float -> Float -> Float -> Float -> Camera -> a -> IO Vec3
-colorForPixel nx ny x y camera world =
+colorForPixel width height x y camera world =
   fmap (gammaCorrection . average) . parallel $ do
     subPixelX <- subPixelXs
     subPixelY <- subPixelYs
-    let u = (x + subPixelX) / nx
-        v = (y + subPixelY) / ny
+    let u = (x + subPixelX) / width
+        v = (y + subPixelY) / height
     return $ do
-      ray <- getRay u v camera
+      ray <- camera.getRay u v
       rayColor ray world
 
 vecToColorStr :: Vec3 -> String
@@ -69,21 +71,21 @@ with this complexity in our code to make our program a stream
 of IOs which only has a single pixel in memory at the time.
 -}
 pixels :: Hitable a => Float -> Float -> Camera -> a -> [IO String]
-pixels nx ny camera world = do
-  y <- reverse [0 .. ny]
-  x <- [0 .. (nx - 1)]
-  return $ vecToColorStr <$> colorForPixel nx ny x y camera world
+pixels width height camera world = do
+  y <- reverse [0 .. height]
+  x <- [0 .. (width - 1)]
+  return $ vecToColorStr <$> colorForPixel width height x y camera world
 
 writeImage :: Hitable a => Float -> Float -> Camera -> [a] -> IO ()
-writeImage nx ny camera world = do
-  putStrLn $ "P3\n" ++ show (floor nx) ++ " " ++ show (floor ny) ++ "\n255"
+writeImage width height camera world = do
+  putStrLn $ "P3\n" ++ show (floor width) ++ " " ++ show (floor height) ++ "\n255"
   tree <- createTree initialTRange world
   -- We use sequence_ because it discards the list values and the
   -- can be garbage collected after each pixel has been written to
   -- the disk.
   sequence_
     . fmap (>>= putStrLn)
-    $ pixels nx ny camera tree
+    $ pixels width height camera tree
 
 subPixelXs :: [Float]
 subPixelXs = [0, 0.1 .. 1]
@@ -93,8 +95,8 @@ subPixelYs = [0, 0.2 .. 1]
 
 main :: IO ()
 main = do
-  let nx = 75
-      ny = 50
-      camera = Worlds.triangleCamera nx ny
+  let width = 150
+      height = 100
+      camera = Worlds.triangleCamera width height
   world <- Worlds.triangleWorld
-  writeImage nx ny camera world
+  writeImage width height camera world

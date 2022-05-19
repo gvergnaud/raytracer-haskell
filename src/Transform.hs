@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Transform (flipNormal, translate, rotateY) where
 
 import AABB
