@@ -8,6 +8,7 @@ default-extensions:
   - KindSignatures
   - DataKinds
   - OverloadedRecordDot
+  - DuplicateRecordFields
   - NoFieldSelectors
   - ImportQualifiedPost
 

@@ -3,9 +3,9 @@ module BVH where
 import AABB (AABB (minVec), hitAABB, suroundingBox)
 import Data.List (intercalate, sortBy)
 import Data.List.Split (splitOn)
-import Hitable (HitRecord (HitRecord, t), Hitable (..))
+import Hitable (HitRecord (..), Hitable (..))
 import System.Random (randomRIO)
-import Vec3 (Vec3 (x, y, z))
+import Vec3 (Vec3 (..))
 
 data Tree a
   = Node
@@ -29,8 +29,8 @@ instance (Hitable a) => Hitable (Tree a) where
   hit ray range (Node {box, left, right}) =
     if hitAABB ray box
       then case (hit ray range left, hit ray range right) of
-        (Just leftRec@(HitRecord {t = leftT}), Just rightRec@(HitRecord {t = rightT})) ->
-          Just (if (leftT < rightT) then leftRec else rightRec)
+        (Just leftRec, Just rightRec) ->
+          Just (if (leftRec.t < rightRec.t) then leftRec else rightRec)
         (Just record, _) -> Just record
         (_, Just record) -> Just record
         _ -> Nothing

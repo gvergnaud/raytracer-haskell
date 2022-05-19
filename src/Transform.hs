@@ -43,8 +43,8 @@ instance Hitable a => Hitable (FlipNormal a) where
     boundingBox range hitable
 
   hit ray range (FlipNormal hitable) = do
-    (HitRecord {t, u, v, point, normal, material}) <- hit ray range hitable
-    return $ HitRecord {normal = -normal, t, u, v, point, material}
+    hitRecord <- hit ray range hitable
+    return $ hitRecord {normal = -hitRecord.normal}
 
 data Translate a = Translate Vec3 a
 
@@ -55,16 +55,8 @@ instance Hitable a => Hitable (Translate a) where
 
   hit ray@(Ray {origin, direction}) range (Translate offset hitable) = do
     let translatedRay = Ray (origin - offset) direction
-    record@(HitRecord {point}) <- hit translatedRay range hitable
-    Just $
-      HitRecord
-        { point = point + offset,
-          u = record.u,
-          v = record.v,
-          t = record.t,
-          material = record.material,
-          normal = record.normal
-        }
+    hitRecord <- hit translatedRay range hitable
+    Just (hitRecord {point = hitRecord.point + offset})
 
 data Rotate a = RotateY
   { hitable :: a,
@@ -84,25 +76,26 @@ instance Hitable a => Hitable (Rotate a) where
     --     (sinTheta, cosTheta))
     let rotateY' vec =
           Vec3
-            (cosTheta * vec.x - sinTheta * vec.z)
-            vec.y
-            (sinTheta * vec.x + cosTheta * vec.z)
+            { x = (cosTheta * vec.x - sinTheta * vec.z),
+              y = vec.y,
+              z = (sinTheta * vec.x + cosTheta * vec.z)
+            }
         invRotateY' vec =
           Vec3
-            (cosTheta * vec.x + sinTheta * vec.z)
-            vec.y
-            (-sinTheta * vec.x + cosTheta * vec.z)
+            { x = (cosTheta * vec.x + sinTheta * vec.z),
+              y = vec.y,
+              z = (-sinTheta * vec.x + cosTheta * vec.z)
+            }
+        rotatedRay =
+          Ray
+            { origin = (rotateY' origin),
+              direction = (rotateY' direction)
+            }
 
-        rotatedRay = Ray (rotateY' origin) (rotateY' direction)
-
-    (HitRecord {point, normal, t, u, v, material}) <- hit rotatedRay range hitable
+    hitRecord <- hit rotatedRay range hitable
 
     return $
-      HitRecord
-        { point = invRotateY' point,
-          normal = invRotateY' normal,
-          t,
-          u,
-          v,
-          material
+      hitRecord
+        { point = invRotateY' hitRecord.point,
+          normal = invRotateY' hitRecord.normal
         }

@@ -1,12 +1,15 @@
 module Triangle where
 
-import AABB
+import AABB (AABB (..))
 import Control.Monad (guard)
 import Hitable
-import Material
-import Math
-import Ray
-import Vec3
+  ( HitRecord (..),
+    Hitable (..),
+  )
+import Material (Material)
+import Math (isBetween)
+import Ray (Ray (..))
+import Vec3 (Vec3 (..))
 
 data Triangle
   = XYTriangle (Float, Float) (Float, Float) (Float, Float) Float Material

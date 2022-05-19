@@ -37,6 +37,7 @@ executable raytracer
       KindSignatures
       DataKinds
       OverloadedRecordDot
+      DuplicateRecordFields
       NoFieldSelectors
       ImportQualifiedPost
   ghc-options: -threaded -with-rtsopts=-N4

@@ -1,7 +1,7 @@
 module AABB where
 
-import Ray
-import Vec3
+import Ray (Ray (..))
+import Vec3 (Vec3 (..), vmax, vmin)
 
 data AABB = AABB
   { minVec :: Vec3,
@@ -27,18 +27,18 @@ overlap (min1, max1) (min2, max2) =
         else Nothing
 
 hitAABB :: Ray -> AABB -> Bool
-hitAABB ray@(Ray {origin, direction}) (AABB (Vec3 x y z) (Vec3 x' y' z')) =
-  let xsInterval = interval origin.x direction.x x x'
-      ysInterval = interval origin.y direction.y y y'
-      zsInterval = interval origin.z direction.z z z'
+hitAABB ray (AABB minVec maxVec) =
+  let xsInterval = interval ray.origin.x ray.direction.x minVec.x maxVec.x
+      ysInterval = interval ray.origin.y ray.direction.y minVec.y maxVec.y
+      zsInterval = interval ray.origin.z ray.direction.z minVec.z maxVec.z
       hitInterval = overlap xsInterval =<< overlap ysInterval zsInterval
    in case hitInterval of
         Just interval -> True
         Nothing -> False
 
 suroundingBox :: AABB -> AABB -> AABB
-suroundingBox (AABB min max) (AABB min' max') =
+suroundingBox (AABB minVec maxVec) (AABB minVec' maxVec') =
   AABB
-    { minVec = (min `vmin` min'),
-      maxVec = (max `vmax` max')
+    { minVec = (minVec `vmin` minVec'),
+      maxVec = (maxVec `vmax` maxVec')
     }

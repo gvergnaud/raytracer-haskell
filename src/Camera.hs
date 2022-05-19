@@ -11,9 +11,9 @@ data Camera = Camera
     horizontal :: Vec3,
     vertical :: Vec3,
     lensRadius :: Float,
-    cameraU :: Vec3,
-    cameraV :: Vec3,
-    cameraW :: Vec3
+    u :: Vec3,
+    v :: Vec3,
+    w :: Vec3
   }
 
 newCamera :: Vec3 -> Vec3 -> Vec3 -> Float -> Float -> Float -> Float -> Camera
@@ -31,13 +31,13 @@ newCamera lookFrom lookAt vup fov aspect aperture focusDistance =
           horizontal = vec3 (2 * (halfWidth * focusDistance)) * u,
           vertical = vec3 (2 * (halfHeight * focusDistance)) * v,
           lensRadius,
-          cameraU = u,
-          cameraV = v,
-          cameraW = w
+          u,
+          v,
+          w
         }
 
 getRay :: Float -> Float -> Camera -> IO Ray
-getRay s t (Camera {Camera.origin, lowerLeftCorner, horizontal, vertical, lensRadius, cameraU = u, cameraV = v}) = do
+getRay s t (Camera {origin, lowerLeftCorner, horizontal, vertical, lensRadius, u, v}) = do
   rand <- getRandomInUnitDisk
   let randDisc = vec3 lensRadius * rand
       offset = u * vec3 randDisc.x + v * vec3 randDisc.y
