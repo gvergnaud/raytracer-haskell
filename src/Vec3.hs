@@ -26,21 +26,24 @@ instance Fractional Vec3 where
 
 instance Floating Vec3 where
   pi = vec3 pi
-  exp vec = vec.map exp
-  log vec = vec.map log
-  sin vec = vec.map sin
-  cos vec = vec.map cos
-  asin vec = vec.map asin
-  acos vec = vec.map acos
-  atan vec = vec.map atan
-  sinh vec = vec.map sinh
-  cosh vec = vec.map cosh
-  asinh vec = vec.map asinh
-  acosh vec = vec.map acosh
-  atanh vec = vec.map atanh
+  exp = Vec3.map exp
+  log = Vec3.map log
+  sin = Vec3.map sin
+  cos = Vec3.map cos
+  asin = Vec3.map asin
+  acos = Vec3.map acos
+  atan = Vec3.map atan
+  sinh = Vec3.map sinh
+  cosh = Vec3.map cosh
+  asinh = Vec3.map asinh
+  acosh = Vec3.map acosh
+  atanh = Vec3.map atanh
 
 instance HasField "map" Vec3 ((Float -> Float) -> Vec3) where
-  getField vec f = Vec3 (f vec.x) (f vec.y) (f vec.z)
+  getField = flip Vec3.map
+
+map :: (Float -> Float) -> Vec3 -> Vec3
+map f vec = Vec3 (f vec.x) (f vec.y) (f vec.z)
 
 instance HasField "normalize" Vec3 Vec3 where
   getField v = v / (vec3 $ vecLength v)

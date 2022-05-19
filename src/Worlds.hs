@@ -1,22 +1,27 @@
 module Worlds where
 
-import Camera
+import Camera (Camera, newCamera)
 import Control ((|>))
-import Hitable
+import Hitable (SomeHitable (..))
 import Material
-import Random
+  ( Material (Dielectric, DiffuseLight, Lambertian, Metal),
+  )
+import Random (getRandomItem)
 import Rectangle
-import Sphere
-import System.Random
-import Texture
-import Transform
-import Triangle
-import Vec3
+  ( Rectangle (XYRectangle, XZRectangle, YZRectangle),
+    createBox,
+  )
+import Sphere (Sphere (Sphere))
+import System.Random (randomIO)
+import Texture (Texture (CheckedTexture, ConstantTexture))
+import Transform (flipNormal, rotateY, translate)
+import Triangle (Triangle (XYTriangle))
+import Vec3 (Vec3 (..), map, vec3, vecLength)
 
 blueSky :: Vec3
 blueSky = Vec3 0.5 0.7 1
 
-rgb x y z = (Vec3 x y z).map (/ 255)
+rgb x y z = Vec3.map (/ 255) (Vec3 x y z)
 
 white :: Vec3
 white = vec3 1
@@ -48,10 +53,15 @@ tutoWorld :: IO [Sphere]
 tutoWorld = do
   lambColor <- getRandomItem sphereColors
   metalColor <- getRandomItem sphereColors
+  let floorSphere =
+        Sphere
+          (Vec3 0 (-1000) 0)
+          1000
+          (Lambertian (CheckedTexture (ConstantTexture white) (ConstantTexture (Vec3 0.1 0.1 0.1))))
   let spheres =
-        [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ CheckedTexture (ConstantTexture white) (ConstantTexture (Vec3 0.1 0.1 0.1))),
+        [ floorSphere,
           Sphere (Vec3 0 1 0) 1 (Dielectric 1.5),
-          Sphere (Vec3 (-3) 1 0) 1 (Lambertian $ ConstantTexture lambColor),
+          Sphere (Vec3 (-3) 1 0) 1 (Lambertian (ConstantTexture lambColor)),
           Sphere (Vec3 3 1 0) 1 (Metal (ConstantTexture metalColor) 0)
         ]
 
@@ -70,14 +80,17 @@ tutoWorld = do
             _
               | randMat < 0.8 -> do
                   rgb <- getRandomItem sphereColors
-                  return . Just $ Sphere center 0.2 (Lambertian $ ConstantTexture rgb)
+                  return (Just (Sphere center 0.2 (Lambertian (ConstantTexture rgb))))
             _
               | randMat < 0.95 -> do
                   randVec <- getRandomItem sphereColors
                   metalness <- randomIO :: IO Float
-                  return . Just $ Sphere center 0.2 (Metal (ConstantTexture $ vec3 0.5 * (vec3 1 + randVec)) (0.5 * metalness))
+                  let texture = ConstantTexture (vec3 0.5 * (vec3 1 + randVec))
+                      metal = (Metal texture (0.5 * metalness))
+                      sphere = Sphere center 0.2 metal
+                  return (Just sphere)
             _ -> do
-              return . Just $ Sphere center 0.2 (Dielectric 1.5)
+              return (Just (Sphere center 0.2 (Dielectric 1.5)))
 
 tutoCamera :: Float -> Float -> Camera
 tutoCamera nx ny =
@@ -90,16 +103,16 @@ tutoCamera nx ny =
 snowManWorld :: IO [Sphere]
 snowManWorld = do
   return $
-    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 1)),
+    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 1))),
       Sphere (Vec3 0 1 (-1)) 1 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       Sphere (Vec3 0 3.4 (-1)) 0.5 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       -- Balls
-      Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian $ ConstantTexture (rgb 255 30 30)), -- red
+      Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian (ConstantTexture (rgb 255 30 30))), -- red
       Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (ConstantTexture (rgb 94 45 138)) 0.4), -- purple
-      Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian $ ConstantTexture (rgb 255 202 0)), -- yellow
-      Sphere (Vec3 4 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 117 117 117)), -- offscreen dark
-      Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 230 14 255)) -- offscreen pink
+      Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian (ConstantTexture (rgb 255 202 0))), -- yellow
+      Sphere (Vec3 4 2.5 4) 2.5 (Lambertian (ConstantTexture (rgb 117 117 117))), -- offscreen dark
+      Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian (ConstantTexture (rgb 230 14 255))) -- offscreen pink
     ]
 
 snowManCamera :: Float -> Float -> Camera
@@ -115,28 +128,28 @@ pandaWorld = do
   let white = Vec3 0.95 0.95 0.95
       black = Vec3 0.06 0.06 0.06
       nose position =
-        [ Sphere (position + (Vec3 0 1.8 (0.5))) 0.3 (Lambertian $ ConstantTexture white),
-          Sphere (position + (Vec3 0 1.8 (0.8))) 0.1 (Lambertian $ ConstantTexture black),
-          Sphere (position + (Vec3 (-0.05) 1.8 (0.8))) 0.07 (Lambertian $ ConstantTexture black),
-          Sphere (position + (Vec3 0.05 1.8 (0.8))) 0.07 (Lambertian $ ConstantTexture black)
+        [ Sphere (position + (Vec3 0 1.8 (0.5))) 0.3 (Lambertian (ConstantTexture white)),
+          Sphere (position + (Vec3 0 1.8 (0.8))) 0.1 (Lambertian (ConstantTexture black)),
+          Sphere (position + (Vec3 (-0.05) 1.8 (0.8))) 0.07 (Lambertian (ConstantTexture black)),
+          Sphere (position + (Vec3 0.05 1.8 (0.8))) 0.07 (Lambertian (ConstantTexture black))
         ]
       eyes position =
         [ -- eyes fur
-          Sphere (position + (Vec3 (-0.21) 2 (0.55))) 0.13 (Lambertian $ ConstantTexture black),
-          Sphere (position + (Vec3 0.21 2 (0.55))) 0.13 (Lambertian $ ConstantTexture black),
+          Sphere (position + (Vec3 (-0.21) 2 (0.55))) 0.13 (Lambertian (ConstantTexture black)),
+          Sphere (position + (Vec3 0.21 2 (0.55))) 0.13 (Lambertian (ConstantTexture black)),
           -- pupil
-          Sphere (position + (Vec3 (-0.21) 2 (0.68))) 0.045 (Metal (ConstantTexture $ vec3 0.06) 0.05),
-          Sphere (position + (Vec3 0.21 2 (0.68))) 0.045 (Metal (ConstantTexture $ vec3 0.06) 0.05),
+          Sphere (position + (Vec3 (-0.21) 2 (0.68))) 0.045 (Metal (ConstantTexture (vec3 0.06)) 0.05),
+          Sphere (position + (Vec3 0.21 2 (0.68))) 0.045 (Metal (ConstantTexture (vec3 0.06)) 0.05),
           -- black fur
-          Sphere (position + (Vec3 (-0.27) 1.93 (0.55))) 0.1 (Lambertian $ ConstantTexture black),
-          Sphere (position + (Vec3 0.27 1.93 (0.55))) 0.1 (Lambertian $ ConstantTexture black)
+          Sphere (position + (Vec3 (-0.27) 1.93 (0.55))) 0.1 (Lambertian (ConstantTexture black)),
+          Sphere (position + (Vec3 0.27 1.93 (0.55))) 0.1 (Lambertian (ConstantTexture black))
         ]
       ears =
-        [ Sphere (Vec3 (-0.7) 2.75 (-0.3)) 0.3 (Lambertian $ ConstantTexture black),
-          Sphere (Vec3 0.7 2.75 (-0.3)) 0.3 (Lambertian $ ConstantTexture black)
+        [ Sphere (Vec3 (-0.7) 2.75 (-0.3)) 0.3 (Lambertian (ConstantTexture black)),
+          Sphere (Vec3 0.7 2.75 (-0.3)) 0.3 (Lambertian (ConstantTexture black))
         ]
   return $
-    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
+    [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 0.95))),
       -- offscreen ball
       Sphere (Vec3 4 1.5 (3)) 2.5 (Lambertian (ConstantTexture (vec3 0.5))),
       -- body
@@ -162,10 +175,10 @@ pandaCamera nx ny =
 lightWorld :: IO [SomeHitable]
 lightWorld = do
   return
-    [ SomeHitable $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 0.95)),
-      SomeHitable $ Sphere (Vec3 0 (2) 0) 2 (Lambertian $ ConstantTexture (Vec3 0.3 0.9 0.95)),
+    [ SomeHitable (Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 0.95)))),
+      SomeHitable (Sphere (Vec3 0 (2) 0) 2 (Lambertian (ConstantTexture (Vec3 0.3 0.9 0.95)))),
       -- S $ Sphere (Vec3 0 (7) 0) 1 (DiffuseLight $ ConstantTexture (vec3 4)),
-      SomeHitable $ XYRectangle (3, 5) (1, 3) (-2) (DiffuseLight $ ConstantTexture $ vec3 4)
+      SomeHitable (XYRectangle (3, 5) (1, 3) (-2) (DiffuseLight (ConstantTexture (vec3 4))))
     ]
 
 lightCamera :: Float -> Float -> Camera
@@ -230,15 +243,15 @@ cornellBoxCamera nx ny =
 triangleWorld :: IO [SomeHitable]
 triangleWorld = do
   return $
-    [ SomeHitable $ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian $ ConstantTexture (Vec3 0.9 0.9 1)),
+    [ SomeHitable (Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 1)))),
       --
-      SomeHitable $ XYTriangle (-1, 1) (0, 3) (1, 1) (-1.5) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
+      SomeHitable (XYTriangle (-1, 1) (0, 3) (1, 1) (-1.5) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05)),
       -- Balls
-      SomeHitable $ Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian $ ConstantTexture (rgb 255 30 30)), -- red
-      SomeHitable $ Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (ConstantTexture (rgb 94 45 138)) 0.4), -- purple
-      SomeHitable $ Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian $ ConstantTexture (rgb 255 202 0)), -- yellow
-      SomeHitable $ Sphere (Vec3 4 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 117 117 117)), -- offscreen dark
-      SomeHitable $ Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian $ ConstantTexture (rgb 230 14 255)) -- offscreen pink
+      SomeHitable (Sphere (Vec3 (-1) 0.25 (-0.2)) 0.25 (Lambertian (ConstantTexture (rgb 255 30 30)))), -- red
+      SomeHitable (Sphere (Vec3 2.5 1.2 0) 1.2 (Metal (ConstantTexture (rgb 94 45 138)) 0.4)), -- purple
+      SomeHitable (Sphere (Vec3 2 2.5 (-5)) 2.5 (Lambertian (ConstantTexture (rgb 255 202 0)))), -- yellow
+      SomeHitable (Sphere (Vec3 4 2.5 4) 2.5 (Lambertian (ConstantTexture (rgb 117 117 117)))), -- offscreen dark
+      SomeHitable (Sphere (Vec3 (-3.5) 2.5 4) 2.5 (Lambertian (ConstantTexture (rgb 230 14 255)))) -- offscreen pink
     ]
 
 triangleCamera :: Float -> Float -> Camera

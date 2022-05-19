@@ -5,7 +5,7 @@ import Control.Monad (guard)
 import Hitable
 import Material
 import Math
-import Ray (Ray (..), pointAtParameter)
+import Ray (Ray (..))
 import Transform
 import Vec3
 
@@ -14,19 +14,19 @@ data Rectangle
       { xRange :: (Float, Float),
         yRange :: (Float, Float),
         k :: Float,
-        xyRectMaterial :: Material
+        material :: Material
       }
   | XZRectangle
       { xRange :: (Float, Float),
         zRange :: (Float, Float),
         k :: Float,
-        xzRectMaterial :: Material
+        material :: Material
       }
   | YZRectangle
       { yRange :: (Float, Float),
         zRange :: (Float, Float),
         k :: Float,
-        yzRectMaterial :: Material
+        material :: Material
       }
 
 hitRectangle ::
@@ -69,7 +69,7 @@ hitRectangle
           v = (b - b0) / (b1 - b0),
           t,
           material,
-          point = pointAtParameter t ray,
+          point = ray.pointAtParameter t,
           normal
         }
 

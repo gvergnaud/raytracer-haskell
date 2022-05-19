@@ -3,18 +3,18 @@ module Sphere where
 import AABB (AABB (AABB))
 import Control.Monad (guard)
 import Hitable
-  ( HitRecord (HitRecord, material, normal, point, t, u, v),
+  ( HitRecord (..),
     Hitable (..),
   )
 import Material (Material)
 import Math (isBetween)
-import Ray (Ray (Ray), pointAtParameter)
-import Vec3 (Vec3 (Vec3), dot, vec3)
+import Ray (Ray (..))
+import Vec3 (Vec3 (..), dot, vec3)
 
 data Sphere = Sphere
-  { sphereCenter :: Vec3,
-    sphereRadius :: Float,
-    sphereMaterial :: Material
+  { center :: Vec3,
+    radius :: Float,
+    material :: Material
   }
   deriving (Show)
 
@@ -30,7 +30,7 @@ instance Hitable Sphere where
   boundingBox (tMin, tMax) (Sphere center radius material) =
     AABB (center - vec3 radius) (center + vec3 radius)
 
-  hit ray@(Ray origin direction) (tMin, tMax) sphere@(Sphere center radius material) = do
+  hit ray (tMin, tMax) sphere = do
     {-
     The equation of a sphere `s` is :
       ((x - s.center) `dot` (x - s.center)) = s.radius ** 2
@@ -70,20 +70,20 @@ instance Hitable Sphere where
         t1 = ((- b + sqrt (b ** 2 - a * c)) / a)
         t2 = ((- b - sqrt (b ** 2 - a * c)) / a)
     -}
-    let oc = origin - center
-        a = (direction `dot` direction)
-        b = (oc `dot` direction)
-        c = (oc `dot` oc) - radius ** 2
+    let oc = ray.origin - sphere.center
+        a = (ray.direction `dot` ray.direction)
+        b = (oc `dot` ray.direction)
+        c = (oc `dot` oc) - sphere.radius ** 2
         discriminant = b ** 2 - a * c
 
-    guard $ discriminant > 0
+    guard (discriminant > 0)
 
     let getRecord t = do
-          guard $ isBetween tMin tMax t
-          let point = pointAtParameter t ray
-              normal = (point - center) / vec3 radius
+          guard (isBetween tMin tMax t)
+          let point = ray.pointAtParameter t
+              normal = (point - sphere.center) / vec3 sphere.radius
               (u, v) = getSphereUV point
-           in Just $ HitRecord {t, u, v, point, normal, material}
+           in Just HitRecord {t, u, v, point, normal, material = sphere.material}
         t1 = ((-b - sqrt (b ** 2 - a * c)) / a)
         t2 = ((-b + sqrt (b ** 2 - a * c)) / a)
 
