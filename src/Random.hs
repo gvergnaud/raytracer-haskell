@@ -8,7 +8,7 @@ getRandomVector = do
   x <- randomIO
   y <- randomIO
   z <- randomIO
-  return $ Vec3 x y z
+  return (Vec3 x y z)
 
 getRandomVecInUnitSphere :: IO Vec3
 getRandomVecInUnitSphere = do
@@ -31,9 +31,8 @@ getRandomInUnitDisk = do
 
 getRandomColor :: IO Vec3
 getRandomColor = do
-  let randomList = fmap (\_ -> randomIO) [1 .. 6]
-  [x1, x2, y1, y2, z1, z2] <- sequence randomList
-  return $ Vec3 (x1 * x2) (y1 * y2) (z1 * z2)
+  [x1, x2, y1, y2, z1, z2] <- sequence (fmap (\_ -> randomIO) [1 .. 6])
+  return (Vec3 (x1 * x2) (y1 * y2) (z1 * z2))
 
 getRandomItem :: [a] -> IO a
 getRandomItem xs =

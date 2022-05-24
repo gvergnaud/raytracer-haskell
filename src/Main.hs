@@ -41,10 +41,10 @@ rayColor ray hitable =
             Just (ScatterRecord {scattered, attenuation})
               | depth < 50 -> do
                   c <- getColor scattered hitable (depth + 1)
-                  return $ emitted + c * attenuation
-            _ -> return $ emitted
+                  return (emitted + c * attenuation)
+            _ -> return (emitted)
         Nothing ->
-          return $ skyColor ray.direction
+          return (skyColor ray.direction)
 
 average :: Fractional a => [a] -> a
 average xs = (sum xs) / genericLength xs
@@ -59,7 +59,7 @@ colorForPixel width height x y camera world =
     subPixelY <- subPixelYs
     let u = (x + subPixelX) / width
         v = (y + subPixelY) / height
-    return $ do
+    return do
       ray <- camera.getRay u v
       rayColor ray world
 
@@ -82,7 +82,7 @@ pixels :: Hitable a => Float -> Float -> Camera -> a -> [IO String]
 pixels width height camera world = do
   y <- reverse [0 .. height]
   x <- [0 .. (width - 1)]
-  return $ vecToColorStr <$> colorForPixel width height x y camera world
+  return (vecToColorStr <$> colorForPixel width height x y camera world)
 
 writeImage :: Hitable a => Float -> Float -> Camera -> [a] -> IO ()
 writeImage width height camera world = do
@@ -95,10 +95,8 @@ writeImage width height camera world = do
     |> fmap (>>= putStrLn)
     |> sequence_
 
-subPixelXs :: [Float]
 subPixelXs = [0, 0.2 .. 1]
 
-subPixelYs :: [Float]
 subPixelYs = [0, 0.2 .. 1]
 
 main :: IO ()

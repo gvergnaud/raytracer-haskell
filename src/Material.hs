@@ -82,19 +82,18 @@ scatter (Ray {direction}) point normal (Dielectric {refractiveIdx}) = do
       reflectionProbability = schlickReflectionProbability cosine refractiveIdx
   return $
     Just
-      ( case refract direction outwardNormal refRatio of
-          Just refracted
-            | rand > reflectionProbability ->
-                ScatterRecord
-                  { scattered = Ray point refracted,
-                    attenuation = Vec3 1 1 1
-                  }
-          _ ->
-            ScatterRecord
-              { scattered = Ray point (reflect direction normal),
-                attenuation = Vec3 1 1 1
-              }
-      )
+      case refract direction outwardNormal refRatio of
+        Just refracted
+          | rand > reflectionProbability ->
+              ScatterRecord
+                { scattered = Ray point refracted,
+                  attenuation = Vec3 1 1 1
+                }
+        _ ->
+          ScatterRecord
+            { scattered = Ray point (reflect direction normal),
+              attenuation = Vec3 1 1 1
+            }
 --
 scatter ray point normal (DiffuseLight _) =
   return Nothing

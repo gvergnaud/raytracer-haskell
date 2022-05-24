@@ -11,6 +11,9 @@ default-extensions:
   - DuplicateRecordFields
   - NoFieldSelectors
   - ImportQualifiedPost
+  - BlockArguments
+  - LambdaCase
+  - TypeApplications
 
 executables:
   raytracer:

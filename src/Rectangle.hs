@@ -90,21 +90,22 @@ instance Hitable Rectangle where
   hit ray range (YZRectangle yRange zRange x material) =
     hitRectangle ray range (yRange, zRange, x) ((.y), (.z), (.x)) material (Vec3 1 0 0)
 
-data Box = Box {pmin :: Vec3, pmax :: Vec3, hitable :: [SomeHitable]}
+data Box = Box {pmin :: Vec3, pmax :: Vec3, hitable :: SomeHitable}
 
 createBox :: Vec3 -> Vec3 -> Material -> Box
-createBox pmin@(Vec3 xmin ymin zmin) pmax@(Vec3 xmax ymax zmax) material =
-  let xRange = (xmin, xmax)
-      yRange = (ymin, ymax)
-      zRange = (zmin, zmax)
+createBox pmin pmax material =
+  let xRange = (pmin.x, pmax.x)
+      yRange = (pmin.y, pmax.y)
+      zRange = (pmin.z, pmax.z)
       hitable =
-        [ SomeHitable (XYRectangle xRange yRange zmax material),
-          SomeHitable (flipNormal (XYRectangle xRange yRange zmin material)),
-          SomeHitable (XZRectangle xRange zRange ymax material),
-          SomeHitable (flipNormal (XZRectangle xRange zRange ymin material)),
-          SomeHitable (YZRectangle yRange zRange xmax material),
-          SomeHitable (flipNormal (YZRectangle yRange zRange xmin material))
-        ]
+        SomeHitable
+          [ SomeHitable (XYRectangle xRange yRange pmax.z material),
+            SomeHitable (flipNormal (XYRectangle xRange yRange pmin.z material)),
+            SomeHitable (XZRectangle xRange zRange pmax.y material),
+            SomeHitable (flipNormal (XZRectangle xRange zRange pmin.y material)),
+            SomeHitable (YZRectangle yRange zRange pmax.x material),
+            SomeHitable (flipNormal (YZRectangle yRange zRange pmin.x material))
+          ]
    in Box {pmin, pmax, hitable}
 
 instance Hitable Box where

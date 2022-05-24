@@ -10,7 +10,7 @@ data Vec3 = Vec3
   deriving (Show, Eq)
 
 vec3 :: Float -> Vec3
-vec3 f = Vec3 f f f
+vec3 n = Vec3 n n n
 
 instance Num Vec3 where
   vec1 + vec2 = Vec3 (vec1.x + vec2.x) (vec1.y + vec2.y) (vec1.z + vec2.z)

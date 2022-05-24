@@ -1,10 +1,10 @@
 module Transform (flipNormal, translate, rotateY) where
 
-import AABB
-import GHC.Float
-import Hitable
-import Ray
-import Vec3
+import AABB (AABB (..))
+import GHC.Float ()
+import Hitable (HitRecord (normal, point), Hitable (..))
+import Ray (Ray (Ray, direction, origin))
+import Vec3 (Vec3 (..), vec3, vmax, vmin)
 
 flipNormal :: Hitable a => a -> FlipNormal a
 flipNormal = FlipNormal
@@ -44,7 +44,7 @@ instance Hitable a => Hitable (FlipNormal a) where
 
   hit ray range (FlipNormal hitable) = do
     hitRecord <- hit ray range hitable
-    return $ hitRecord {normal = -hitRecord.normal}
+    return hitRecord {normal = -hitRecord.normal}
 
 data Translate a = Translate Vec3 a
 
@@ -56,7 +56,7 @@ instance Hitable a => Hitable (Translate a) where
   hit ray@(Ray {origin, direction}) range (Translate offset hitable) = do
     let translatedRay = Ray (origin - offset) direction
     hitRecord <- hit translatedRay range hitable
-    Just (hitRecord {point = hitRecord.point + offset})
+    return (hitRecord {point = hitRecord.point + offset})
 
 data Rotate a = RotateY
   { hitable :: a,
@@ -94,7 +94,7 @@ instance Hitable a => Hitable (Rotate a) where
 
     hitRecord <- hit rotatedRay range hitable
 
-    return $
+    return
       hitRecord
         { point = invRotateY' hitRecord.point,
           normal = invRotateY' hitRecord.normal

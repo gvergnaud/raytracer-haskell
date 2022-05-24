@@ -18,15 +18,12 @@ import Transform (flipNormal, rotateY, translate)
 import Triangle (Triangle (XYTriangle))
 import Vec3 (Vec3 (..), map, vec3, vecLength)
 
-blueSky :: Vec3
 blueSky = Vec3 0.5 0.7 1
 
 rgb x y z = Vec3.map (/ 255) (Vec3 x y z)
 
-white :: Vec3
 white = vec3 1
 
-sphereColors :: [Vec3]
 sphereColors =
   [ -- Hot
     rgb 232 120 12,
@@ -68,28 +65,25 @@ tutoWorld = do
   fmap ((spheres ++) . flattenListOfMaybes) . sequence $ do
     a <- [(-11), (-9) .. 10]
     b <- [(-11), (-9) .. 10]
-    return $ do
-      randX <- randomIO :: IO Float
-      randZ <- randomIO :: IO Float
+    return do
+      randX <- randomIO
+      randZ <- randomIO
       let center = Vec3 (a + 0.9 * randX) 0.2 (b + 0.9 * randZ)
       if vecLength (center - (Vec3 4 0.2 0)) <= 0.0
         then return Nothing
-        else do
-          randMat <- randomIO :: IO Float
-          case randMat of
-            _
-              | randMat < 0.8 -> do
-                  rgb <- getRandomItem sphereColors
-                  return (Just (Sphere center 0.2 (Lambertian (ConstantTexture rgb))))
-            _
-              | randMat < 0.95 -> do
-                  randVec <- getRandomItem sphereColors
-                  metalness <- randomIO :: IO Float
-                  let texture = ConstantTexture (vec3 0.5 * (vec3 1 + randVec))
-                      metal = (Metal texture (0.5 * metalness))
-                      sphere = Sphere center 0.2 metal
-                  return (Just sphere)
-            _ -> do
+        else
+          (randomIO @Float) >>= \case
+            n | n < 0.8 -> do
+              rgb <- getRandomItem sphereColors
+              return (Just (Sphere center 0.2 (Lambertian (ConstantTexture rgb))))
+            n | n < 0.95 -> do
+              randVec <- getRandomItem sphereColors
+              metalness <- randomIO :: IO Float
+              let texture = ConstantTexture (vec3 0.5 * (vec3 1 + randVec))
+                  metal = (Metal texture (0.5 * metalness))
+                  sphere = Sphere center 0.2 metal
+              return (Just sphere)
+            _ ->
               return (Just (Sphere center 0.2 (Dielectric 1.5)))
 
 tutoCamera :: Float -> Float -> Camera
@@ -102,7 +96,7 @@ tutoCamera nx ny =
 
 snowManWorld :: IO [Sphere]
 snowManWorld = do
-  return $
+  return
     [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 1))),
       Sphere (Vec3 0 1 (-1)) 1 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
@@ -195,7 +189,7 @@ cornellBoxWorld = do
       white = Lambertian (ConstantTexture (vec3 0.73))
       green = Lambertian (ConstantTexture (Vec3 0.12 0.45 0.15))
       light = DiffuseLight (ConstantTexture (vec3 15))
-  return $
+  return
     [ SomeHitable
         ( YZRectangle (0, 555) (0, 555) 555 green
             |> flipNormal
@@ -242,7 +236,7 @@ cornellBoxCamera nx ny =
 
 triangleWorld :: IO [SomeHitable]
 triangleWorld = do
-  return $
+  return
     [ SomeHitable (Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 1)))),
       --
       SomeHitable (XYTriangle (-1, 1) (0, 3) (1, 1) (-1.5) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05)),

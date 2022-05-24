@@ -40,6 +40,9 @@ executable raytracer
       DuplicateRecordFields
       NoFieldSelectors
       ImportQualifiedPost
+      BlockArguments
+      LambdaCase
+      TypeApplications
   ghc-options: -threaded -with-rtsopts=-N4
   build-depends:
       base

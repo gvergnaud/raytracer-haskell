@@ -1,6 +1,7 @@
 module BVH where
 
 import AABB (AABB (minVec), hitAABB, suroundingBox)
+import Control ((|>))
 import Data.List (intercalate, sortBy)
 import Data.List.Split (splitOn)
 import Hitable (HitRecord (..), Hitable (..))
@@ -40,28 +41,34 @@ instance (Hitable a) => Hitable (Tree a) where
 
 createTree :: (Hitable a) => (Float, Float) -> [a] -> IO (Tree a)
 createTree range (x : []) =
-  return $ Leaf x
+  return (Leaf x)
 createTree range (x : y : []) =
   let aabb = suroundingBox (boundingBox range x) (boundingBox range y)
-   in return $ Node aabb (Leaf x) (Leaf y)
-createTree range list
-  | length list > 2 = do
-      rand <- randomRIO (0, 2) :: IO Int
-      let getVecPart = case rand of
-            0 -> (.x)
-            1 -> (.y)
-            2 -> (.z)
+   in return (Node aabb (Leaf x) (Leaf y))
+createTree range list | length list > 2 = do
+  rand <- randomRIO (0, 2) :: IO Int
+  let getVecPart = case rand of
+        0 -> (.x)
+        1 -> (.y)
+        2 -> (.z)
 
-          (left, right) =
-            splitAt (length list `div` 2) . sortBy sorter $ list
-            where
-              sorter a b =
-                if getVecPart (boundingBox range a).minVec < getVecPart (boundingBox range b).minVec
-                  then GT
-                  else LT
+      (left, right) =
+        list
+          |> sortBy sorter
+          |> splitAt (length list `div` 2)
+        where
+          sorter a b =
+            if getVecPart (boundingBox range a).minVec < getVecPart (boundingBox range b).minVec
+              then GT
+              else LT
 
-          aabb = suroundingBox (boundingBox range left) (boundingBox range right)
+      aabb = suroundingBox (boundingBox range left) (boundingBox range right)
 
-      leftTree <- createTree range left
-      rightTree <- createTree range right
-      return $ Node aabb leftTree rightTree
+  leftTree <- createTree range left
+  rightTree <- createTree range right
+  return
+    Node
+      { box = aabb,
+        left = leftTree,
+        right = rightTree
+      }
