@@ -50,8 +50,10 @@ instance Hitable Triangle where
     -- from https://mathworld.wolfram.com/TriangleInterior.html
     let vecFromTuple :: (Float, Float) -> Vec3
         vecFromTuple (x, y) = Vec3 x y k
+
         det :: Vec3 -> Vec3 -> Float
         det (Vec3 ux uy _) (Vec3 vx vy _) = ux * vy - uy * vx
+
         v = intersectionPoint
         v0 = vecFromTuple p1
         v1 = (vecFromTuple p2 - v0) -- vector from v0 to the first end of the side

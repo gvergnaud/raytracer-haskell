@@ -23,7 +23,7 @@ instance Show a => Show (Tree a) where
   show (Leaf x) =
     "Leaf (" ++ show x ++ ")"
 
-instance (Hitable a) => Hitable (Tree a) where
+instance Hitable a => Hitable (Tree a) where
   boundingBox range (Node {box}) = box
   boundingBox range (Leaf a) = boundingBox range a
 
@@ -41,10 +41,10 @@ instance (Hitable a) => Hitable (Tree a) where
 
 createTree :: (Hitable a) => (Float, Float) -> [a] -> IO (Tree a)
 createTree range (x : []) =
-  return (Leaf x)
+  pure (Leaf x)
 createTree range (x : y : []) =
   let aabb = suroundingBox (boundingBox range x) (boundingBox range y)
-   in return (Node aabb (Leaf x) (Leaf y))
+   in pure (Node aabb (Leaf x) (Leaf y))
 createTree range list | length list > 2 = do
   rand <- randomRIO (0, 2) :: IO Int
   let getVecPart = case rand of
@@ -66,7 +66,7 @@ createTree range list | length list > 2 = do
 
   leftTree <- createTree range left
   rightTree <- createTree range right
-  return
+  pure
     Node
       { box = aabb,
         left = leftTree,

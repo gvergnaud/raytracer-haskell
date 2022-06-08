@@ -1,13 +1,13 @@
 module Rectangle where
 
-import AABB
+import AABB (AABB (AABB))
 import Control.Monad (guard)
-import Hitable
-import Material
-import Math
+import Hitable (HitRecord (..), Hitable (..), SomeHitable (..))
+import Material (Material)
+import Math (isBetween)
 import Ray (Ray (..))
-import Transform
-import Vec3
+import Transform (flipNormal)
+import Vec3 (Vec3 (..))
 
 data Rectangle
   = XYRectangle
@@ -63,7 +63,7 @@ hitRectangle
 
     guard $ isBetween a0 a1 a && isBetween b0 b1 b
 
-    return $
+    pure
       HitRecord
         { u = (a - a0) / (a1 - a0),
           v = (b - b0) / (b1 - b0),

@@ -44,7 +44,7 @@ instance Hitable a => Hitable (FlipNormal a) where
 
   hit ray range (FlipNormal hitable) = do
     hitRecord <- hit ray range hitable
-    return hitRecord {normal = -hitRecord.normal}
+    pure (hitRecord {normal = -hitRecord.normal})
 
 data Translate a = Translate Vec3 a
 
@@ -56,7 +56,7 @@ instance Hitable a => Hitable (Translate a) where
   hit ray@(Ray {origin, direction}) range (Translate offset hitable) = do
     let translatedRay = Ray (origin - offset) direction
     hitRecord <- hit translatedRay range hitable
-    return (hitRecord {point = hitRecord.point + offset})
+    pure (hitRecord {point = hitRecord.point + offset})
 
 data Rotate a = RotateY
   { hitable :: a,
@@ -94,7 +94,7 @@ instance Hitable a => Hitable (Rotate a) where
 
     hitRecord <- hit rotatedRay range hitable
 
-    return
+    pure
       hitRecord
         { point = invRotateY' hitRecord.point,
           normal = invRotateY' hitRecord.normal

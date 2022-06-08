@@ -2,6 +2,7 @@ module Worlds where
 
 import Camera (Camera, newCamera)
 import Control ((|>))
+import Control.Monad (join)
 import Hitable (SomeHitable (..))
 import Material
   ( Material (Dielectric, DiffuseLight, Lambertian, Metal),
@@ -39,13 +40,6 @@ sphereColors =
     rgb 143 203 217
   ]
 
-flattenListOfMaybes :: [Maybe a] -> [a]
-flattenListOfMaybes xs =
-  foldr flatten [] xs
-  where
-    flatten (Just v) acc = v : acc
-    flatten Nothing acc = acc
-
 tutoWorld :: IO [Sphere]
 tutoWorld = do
   lambColor <- getRandomItem sphereColors
@@ -62,29 +56,31 @@ tutoWorld = do
           Sphere (Vec3 3 1 0) 1 (Metal (ConstantTexture metalColor) 0)
         ]
 
-  fmap ((spheres ++) . flattenListOfMaybes) . sequence $ do
+  spheresList <- sequence do
     a <- [(-11), (-9) .. 10]
     b <- [(-11), (-9) .. 10]
-    return do
+    pure do
       randX <- randomIO
       randZ <- randomIO
       let center = Vec3 (a + 0.9 * randX) 0.2 (b + 0.9 * randZ)
       if vecLength (center - (Vec3 4 0.2 0)) <= 0.0
-        then return Nothing
+        then pure []
         else
           (randomIO @Float) >>= \case
             n | n < 0.8 -> do
               rgb <- getRandomItem sphereColors
-              return (Just (Sphere center 0.2 (Lambertian (ConstantTexture rgb))))
+              pure [Sphere center 0.2 (Lambertian (ConstantTexture rgb))]
             n | n < 0.95 -> do
               randVec <- getRandomItem sphereColors
               metalness <- randomIO :: IO Float
               let texture = ConstantTexture (vec3 0.5 * (vec3 1 + randVec))
                   metal = (Metal texture (0.5 * metalness))
                   sphere = Sphere center 0.2 metal
-              return (Just sphere)
+              pure [sphere]
             _ ->
-              return (Just (Sphere center 0.2 (Dielectric 1.5)))
+              pure [Sphere center 0.2 (Dielectric 1.5)]
+
+  pure (spheres ++ join spheresList)
 
 tutoCamera :: Float -> Float -> Camera
 tutoCamera nx ny =
@@ -96,7 +92,7 @@ tutoCamera nx ny =
 
 snowManWorld :: IO [Sphere]
 snowManWorld = do
-  return
+  pure
     [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 1))),
       Sphere (Vec3 0 1 (-1)) 1 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
       Sphere (Vec3 0 2.3 (-1)) 0.75 (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05),
@@ -142,7 +138,7 @@ pandaWorld = do
         [ Sphere (Vec3 (-0.7) 2.75 (-0.3)) 0.3 (Lambertian (ConstantTexture black)),
           Sphere (Vec3 0.7 2.75 (-0.3)) 0.3 (Lambertian (ConstantTexture black))
         ]
-  return $
+  pure $
     [ Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 0.95))),
       -- offscreen ball
       Sphere (Vec3 4 1.5 (3)) 2.5 (Lambertian (ConstantTexture (vec3 0.5))),
@@ -167,8 +163,8 @@ pandaCamera nx ny =
    in newCamera lookFrom lookAt vup 45 (nx / ny) 0.07 focusDistance
 
 lightWorld :: IO [SomeHitable]
-lightWorld = do
-  return
+lightWorld =
+  pure
     [ SomeHitable (Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 0.95)))),
       SomeHitable (Sphere (Vec3 0 (2) 0) 2 (Lambertian (ConstantTexture (Vec3 0.3 0.9 0.95)))),
       -- S $ Sphere (Vec3 0 (7) 0) 1 (DiffuseLight $ ConstantTexture (vec3 4)),
@@ -189,7 +185,7 @@ cornellBoxWorld = do
       white = Lambertian (ConstantTexture (vec3 0.73))
       green = Lambertian (ConstantTexture (Vec3 0.12 0.45 0.15))
       light = DiffuseLight (ConstantTexture (vec3 15))
-  return
+  pure
     [ SomeHitable
         ( YZRectangle (0, 555) (0, 555) 555 green
             |> flipNormal
@@ -235,8 +231,8 @@ cornellBoxCamera nx ny =
    in newCamera lookFrom lookAt vup fov (nx / ny) aperture focusDistance
 
 triangleWorld :: IO [SomeHitable]
-triangleWorld = do
-  return
+triangleWorld =
+  pure
     [ SomeHitable (Sphere (Vec3 0 (-1000) 0) 1000 (Lambertian (ConstantTexture (Vec3 0.9 0.9 1)))),
       --
       SomeHitable (XYTriangle (-1, 1) (0, 3) (1, 1) (-1.5) (Metal (ConstantTexture (Vec3 0.9 0.9 1)) 0.05)),

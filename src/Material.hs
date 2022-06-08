@@ -33,7 +33,7 @@ refract vec normal refractiveIndicesRatio =
           Just
             ( vec3 refractiveIndicesRatio
                 * (uv - normal * vec3 dt) - normal
-                * (vec3 . sqrt) discriminant
+                * vec3 (sqrt discriminant)
             )
         else Nothing
 
@@ -49,7 +49,7 @@ scatter ray point normal (Lambertian {texture}) = do
   let target = point + normal + rand
       scattered = Ray point (target - point)
       attenuation = textureValue 0 0 point texture
-  return (Just (ScatterRecord {scattered, attenuation}))
+  pure (Just (ScatterRecord {scattered, attenuation}))
 --
 scatter ray point normal (Metal {albedo, fuzz}) = do
   rand <- getRandomVecInUnitSphere
@@ -60,7 +60,7 @@ scatter ray point normal (Metal {albedo, fuzz}) = do
             direction = reflected + vec3 fuzz * rand
           }
       attenuation = textureValue 0 0 point albedo
-  return $
+  pure
     if scattered.direction `dot` normal > 0
       then Just (ScatterRecord {scattered, attenuation})
       else Nothing
@@ -80,23 +80,24 @@ scatter (Ray {direction}) point normal (Dielectric {refractiveIdx}) = do
               -(direction `dot` normal) / direction.vecLength
             )
       reflectionProbability = schlickReflectionProbability cosine refractiveIdx
-  return $
-    Just
-      case refract direction outwardNormal refRatio of
-        Just refracted
-          | rand > reflectionProbability ->
-              ScatterRecord
-                { scattered = Ray point refracted,
-                  attenuation = Vec3 1 1 1
-                }
-        _ ->
-          ScatterRecord
-            { scattered = Ray point (reflect direction normal),
-              attenuation = Vec3 1 1 1
-            }
+  pure
+    ( Just
+        case refract direction outwardNormal refRatio of
+          Just refracted
+            | rand > reflectionProbability ->
+                ScatterRecord
+                  { scattered = Ray point refracted,
+                    attenuation = Vec3 1 1 1
+                  }
+          _ ->
+            ScatterRecord
+              { scattered = Ray point (reflect direction normal),
+                attenuation = Vec3 1 1 1
+              }
+    )
 --
 scatter ray point normal (DiffuseLight _) =
-  return Nothing
+  pure Nothing
 
 emit :: Float -> Float -> Vec3 -> Material -> Vec3
 emit u v point (DiffuseLight {texture}) =

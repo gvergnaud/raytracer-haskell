@@ -26,7 +26,7 @@ newCamera lookFrom lookAt vup fov aspect aperture focusDistance =
       u = (vup `cross` w).normalize
       v = w `cross` u
    in Camera
-        { Camera.origin = lookFrom,
+        { origin = lookFrom,
           lowerLeftCorner = lookFrom - vec3 (halfWidth * focusDistance) * u - vec3 (halfHeight * focusDistance) * v - vec3 focusDistance * w,
           horizontal = vec3 (2 * (halfWidth * focusDistance)) * u,
           vertical = vec3 (2 * (halfHeight * focusDistance)) * v,
@@ -43,7 +43,7 @@ getRay s t (Camera {origin, lowerLeftCorner, horizontal, vertical, lensRadius, u
       offset = u * vec3 randDisc.x + v * vec3 randDisc.y
       rayOrigin = origin + offset
       direction = lowerLeftCorner + (vec3 s * horizontal) + (vec3 t * vertical) - origin - offset
-  return $ Ray rayOrigin direction
+  pure (Ray rayOrigin direction)
 
 instance HasField "getRay" Camera (Float -> Float -> IO Ray) where
   getField cam s t = getRay s t cam
