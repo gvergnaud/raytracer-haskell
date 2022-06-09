@@ -9,7 +9,9 @@ import Material
   )
 import Random (getRandomItem)
 import Rectangle
-  ( Rectangle (XYRectangle, XZRectangle, YZRectangle),
+  ( XYRectangle (XYRectangle),
+    XZRectangle (XZRectangle),
+    YZRectangle (YZRectangle),
     createBox,
   )
 import Sphere (Sphere (Sphere))

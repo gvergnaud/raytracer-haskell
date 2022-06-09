@@ -9,25 +9,26 @@ import Ray (Ray (..))
 import Transform (flipNormal)
 import Vec3 (Vec3 (..))
 
-data Rectangle
-  = XYRectangle
-      { xRange :: (Float, Float),
-        yRange :: (Float, Float),
-        k :: Float,
-        material :: Material
-      }
-  | XZRectangle
-      { xRange :: (Float, Float),
-        zRange :: (Float, Float),
-        k :: Float,
-        material :: Material
-      }
-  | YZRectangle
-      { yRange :: (Float, Float),
-        zRange :: (Float, Float),
-        k :: Float,
-        material :: Material
-      }
+data XYRectangle = XYRectangle
+  { xRange :: (Float, Float),
+    yRange :: (Float, Float),
+    k :: Float,
+    material :: Material
+  }
+
+data XZRectangle = XZRectangle
+  { xRange :: (Float, Float),
+    zRange :: (Float, Float),
+    k :: Float,
+    material :: Material
+  }
+
+data YZRectangle = YZRectangle
+  { yRange :: (Float, Float),
+    zRange :: (Float, Float),
+    k :: Float,
+    material :: Material
+  }
 
 hitRectangle ::
   Ray ->
@@ -73,20 +74,24 @@ hitRectangle
           normal
         }
 
-instance Hitable Rectangle where
-  -- boundingBox :: (Float, Float) -> a -> AABB
+instance Hitable XYRectangle where
   boundingBox _ (XYRectangle {xRange = (x0, x1), yRange = (y0, y1), k}) =
     AABB (Vec3 x0 y0 (k - 0.001)) (Vec3 x1 y1 (k + 0.001))
+
+  hit ray range (XYRectangle xRange yRange z material) =
+    hitRectangle ray range (xRange, yRange, z) ((.x), (.y), (.z)) material (Vec3 0 0 1)
+
+instance Hitable XZRectangle where
   boundingBox _ (XZRectangle {xRange = (x0, x1), zRange = (z0, z1), k}) =
     AABB (Vec3 x0 (k - 0.001) z0) (Vec3 x1 (k + 0.001) z1)
+
+  hit ray range (XZRectangle xRange zRange y material) =
+    hitRectangle ray range (xRange, zRange, y) ((.x), (.z), (.y)) material (Vec3 0 1 0)
+
+instance Hitable YZRectangle where
   boundingBox _ (YZRectangle {yRange = (y0, y1), zRange = (z0, z1), k}) =
     AABB (Vec3 (k - 0.001) y0 z0) (Vec3 (k + 0.001) y1 z1)
 
-  -- hit :: Ray -> (Float, Float) ->  Rectangle -> Maybe HitRecord
-  hit ray range (XYRectangle xRange yRange z material) =
-    hitRectangle ray range (xRange, yRange, z) ((.x), (.y), (.z)) material (Vec3 0 0 1)
-  hit ray range (XZRectangle xRange zRange y material) =
-    hitRectangle ray range (xRange, zRange, y) ((.x), (.z), (.y)) material (Vec3 0 1 0)
   hit ray range (YZRectangle yRange zRange x material) =
     hitRectangle ray range (yRange, zRange, x) ((.y), (.z), (.x)) material (Vec3 1 0 0)
 
